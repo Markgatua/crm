@@ -1,0 +1,90 @@
+
+
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+	<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <title></title>
+  <style>
+    table, td, div, h1, p {
+      font-family: Arial, sans-serif;
+    }
+    @media screen and (max-width: 530px) {
+      .unsub {
+        display: block;
+        padding: 8px;
+        margin-top: 14px;
+        border-radius: 6px;
+        background-color: #555555;
+        text-decoration: none !important;
+        font-weight: bold;
+      }
+      .col-lge {
+        max-width: 100% !important;
+      }
+    }
+    @media screen and (min-width: 531px) {
+      .col-sml {
+        max-width: 27% !important;
+      }
+      .col-lge {
+        max-width: 73% !important;
+      }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;word-spacing:normal;background-color:#2573f9;">
+  <div role="article" aria-roledescription="email" lang="en" style="text-size-adjust:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;background-color:#2573f9;">
+    <table role="presentation" style="width:100%;border:none;border-spacing:0;">
+      <tr>
+        <td align="center" style="padding:0;">
+          <!--[if mso]>
+          <table role="presentation" align="center" style="width:600px;">
+          <tr>
+          <td>
+          <![endif]-->
+          <table role="presentation" style="width:94%;max-width:600px;border:none;border-spacing:0;text-align:left;font-family:Arial,sans-serif;font-size:16px;line-height:22px;color:#2573f9;">
+            <tr>
+                <td style="padding:40px 30px 30px 30px;background-color:#2573f9">
+
+                </td>
+              </tr>
+            <tr>
+              <td style="padding:30px;background-color:#ffffff;">
+                <div class="logo">
+                    <img src="https://xtranet.co.ke/wp-content/uploads/2022/08/XTranet-Logo.png" alt="" width="90%">
+                </div>
+                <h3 style="margin-top:20px;margin-bottom:16px;font-size:26px;line-height:32px;font-weight:bold;letter-spacing:-0.02em;">XTRANET CRM</h3>
+               
+                <p style="color:#000;font-size:20px;">Your Email verification code is <strong><?php echo($code) ?></strong> .<br><br>
+                    <p style="color:#000;font-size:20px">This code is valid for 10 minutes.</p>
+                
+              <p style="color:#000;font-size:20px;">
+                  For more Information Email us on: <a href="mailto:info@technaks.co.ke">info@xtranet.co.ke</a>
+              </p>
+              <br>
+                <h4 style="color:#000; font-size:16px">© 2024 XRTANET || CRM. All rights reserved.</h4>
+
+              </td>
+            </tr>
+
+              <tr>
+                <td style="padding:40px 30px 30px 30px;background-color:#2573f9">
+
+                </td>
+              </tr>
+            
+          </table>
+          <!--[if mso]>
+          </td>
+          </tr>
+          </table>
+          <![endif]-->
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

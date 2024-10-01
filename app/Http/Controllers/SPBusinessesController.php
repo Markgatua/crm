@@ -1,0 +1,477 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Client;
+use App\Models\Account;
+use App\Models\Solution;
+use App\Models\ClientType;
+use App\Models\User;
+use App\Models\ProjectStage;
+use App\Models\SolutionSubType;
+use App\Models\SolutionType;
+use App\Models\ProjectStageInformation;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+
+class SPBusinessesController extends Controller
+{
+    public function index($id){
+        $user_id = Auth::user()->id;
+        $clienttypes = ClientType::all();
+        $solutiontypes = SolutionType::all();
+        $solutions = Solution::all();
+        $solutionsubtypes = SolutionSubType::all();
+
+
+        $accounts = Account::with(['client', 'latestStage.projectStage'])
+            ->where('client_id', $id)
+            ->select('accounts.*', 'solution_types.solution_type_name', 'solutions.solution_name', 'solution_sub_types.solution_sub_type_name')
+            ->leftJoin('solution_types', 'solution_types.id', '=', 'accounts.solution_type_id')
+            ->leftJoin('solutions', 'solutions.id', '=', 'accounts.solution_id')
+            ->leftJoin('solution_sub_types', 'solution_sub_types.id', '=', 'accounts.solution_sub_type_id')
+            ->get();
+
+
+
+        // $data2 = ProjectStageInformation::where('account_id',)
+
+
+        $projectstages = ProjectStage::all();
+        $client = Client::where('id', $id)->first();
+        $presales = User::where('role_id',6)->where('is_active', 1)->get();
+        return Inertia::render('SalesPerson/Accounts/Businesses/index',[
+            'client' => $client,
+            'accounts' => $accounts,
+            'clienttypes'=> $clienttypes,
+            'solutiontypes' => $solutiontypes,
+            'solutions'=> $solutions,
+            'solutionsubtypes' => $solutionsubtypes,
+            'projectstages' => $projectstages,
+            'presales' => $presales
+        ]);
+    }
+
+    public function create(Request $request){
+
+        $client = Client::where('id',$request->client_id)->first();
+        if($request->useaccountcontacts == true){
+            $cinfo = json_decode($client->contact_information);
+            if (!empty($request->input('contact_information'))) {
+                // Merge the existing and new contact information
+                $cinfo = array_merge($cinfo, $request->input('contact_information'));
+            }
+        }else{
+            $cinfo = $request->input('contact_information');
+        }
+
+        $arrA = [];
+
+
+        if ($request->file('documents')) {
+            foreach ($request->file('documents') as $key => $document) {
+                if (isset($document['file'])) {
+                    $fileName = time() . '_' . $document['file']->getClientOriginalName();
+                    $document['file']->move(public_path('uploads'), $fileName);
+                        $file_path = '/uploads/'.$fileName;
+                    array_push($arrA,["key"=>$request->input('documents')[$key]['name'],"value"=>$file_path]);
+                }
+            }
+        }
+
+
+        $meta = [];
+
+        $fields = [
+            "Next Action" => $request->next_actions,
+            "Presale description" => $request->presale_description,
+            "Presale Quotation" => $request->presale_quotation,
+            "Product Category" => $request->solution_name,
+            "Expected Sale Value" => $request->expected_sale_value,
+            "Projected Month Of Closure" => $request->projected_month_of_closure,
+            "Closure Probability" => $request->probability_of_closure,
+            "Estimated Month Of Closure" => $request->expected_month_of_closure,
+            "Deal Amount" => $request->deal_amount,
+            "Margins Projection" => $request->margins_projection,
+            "Project Delivery Date" => $request->project_delivery_date,
+            "Reasons For Loosing" => $request->reason_for_losing,
+            "Presales Assigned" => $request->presale_assigned,
+            "Site Surveys" => $request->site_survey_comments,
+            "Due Date" => $request->site_survey_due_date,
+            "Reasons For Overdue" => $request->reason_for_overdue,
+            "Next Steps" => $request->overdue_next_steps,
+            "contract_name" => $request->contract_name,
+            "contract_number" => $request->contract_number,
+            "contract_validity" => $request->contract_validity,
+            "contract_start_date" => $request->contract_start_date,
+            "contract_end_date" => $request->contract_end_date,
+            "contract_license" => $request->contract_license,
+            "contract_license_type" => $request->contract_license_type,
+            "contract_license_renewal_validity" => $request->contract_license_renewal_validity,
+            "contract_license_renewal_start_date" => $request->contract_license_renewal_start_date,
+            "contract_license_renewal_end_date" => $request->contract_license_renewal_end_date,
+        ];
+
+        foreach ($fields as $key => $value) {
+            if ($value !== null && $value !== '') {
+                if($value == -1){
+
+                }else{
+                    $meta[] = ["key" => $key, "value" => $value];
+                }
+            }
+        }
+
+        $acstage = $request->pushtopresales;
+        if($acstage == 1){
+            $acstage = 2;
+        }else{
+            $acstage = 1;
+        }
+        // Add Documents key with array of file paths if there are any documents
+        if (!empty($arrA)) {
+            $meta[] = ["key" => "Documents", "value" => $arrA];
+        }
+
+        try {
+            // Create a new client instance and save the validated data
+            $account = new Account();
+            if($request->input('solution_name') != null && $request->input('solution_name') != ''){
+                $account->business_name = $client->name. ' - '. $request->input('solution_name');
+            }else{
+            $account->business_name = $client->name;
+            }
+
+            $account->solution_name = $request->input('solution_name');
+            $account->client_id = $request->client_id;
+            $account->user_id = Auth::user()->id;
+            $account->client_type_id = $request->input('client_type_id');
+            $account->solution_type_id = $request->input('solution_type_id');
+            $account->solution_id = $request->input('solution_id');
+            $account->solution_sub_type_id = $request->input('solution_sub_type_id');
+            $account->contact_information = json_encode($cinfo);
+            $account->stage = $acstage;
+            $account->presale_scoping_actions = $request->presale_actions;
+            $account->save();
+
+            if($request->input('project_stage_id')== 10){
+                $account2 = $account->id;
+                $account2->crm = 1;
+                $account2->saveOrFail();
+
+                $client = Client::find($account->client_id);
+                $client->is_existing = 1;
+                $client->saveOrFail();
+            }
+
+            $todaydate = Carbon::now()->format('F j, Y');
+
+            $projectinfo = new ProjectStageInformation();
+            $projectinfo->project_stage_id = $request->input('project_stage_id');
+            $projectinfo->account_id = $account->id;
+            $projectinfo->stage_information = "Account updated on $todaydate to stage $request->project_stage_id";
+            $projectinfo->meta = $meta;
+            $projectinfo->save();
+
+            return back()->with('success', 'Account Created Successfully');
+        } catch (\Exception $e) {
+            // Handle the exception if saveOrFail fails
+            return back()->with('error','Failed to create account. Please try again.');
+        }
+    }
+
+    public function updateStage(Request $request){
+
+        $arrA = [];
+
+
+        if ($request->file('documents')) {
+            foreach ($request->file('documents') as $key => $document) {
+                if (isset($document['file'])) {
+                    $fileName = time() . '_' . $document['file']->getClientOriginalName();
+                    $document['file']->move(public_path('uploads'), $fileName);
+                        $file_path = '/uploads/'.$fileName;
+                    array_push($arrA,["key"=>$request->input('documents')[$key]['name'],"value"=>$file_path]);
+                }
+            }
+        }
+
+
+
+        $meta = [];
+
+        $fields = [
+            "Next Action" => $request->next_actions,
+            "Presale description" => $request->presale_description,
+            "Presale Quotation" => $request->presale_quotation,
+            "Product Category" => $request->solution_name,
+            "Expected Sale Value" => $request->expected_sale_value,
+            "Projected Month Of Closure" => $request->projected_month_of_closure,
+            "Closure Probability" => $request->probability_of_closure,
+            "Estimated Month Of Closure" => $request->expected_month_of_closure,
+            "Deal Amount" => $request->deal_amount,
+            "Margins Projection" => $request->margins_projection,
+            "Project Delivery Date" => $request->project_delivery_date,
+            "Reasons For Loosing" => $request->reason_for_losing,
+            "Presales Assigned" => $request->presale_assigned,
+            "Site Surveys" => $request->site_survey_comments,
+            "Due Date" => $request->site_survey_due_date,
+            "Reasons For Overdue" => $request->reason_for_overdue,
+            "Next Steps" => $request->overdue_next_steps,
+            "Contract Name" => $request->contract_name,
+            "Contract Number" => $request->contract_number,
+            "Contract Validity" => $request->contract_validity,
+            "Contract Start Date" => $request->contract_start_date,
+            "Contract End Date" => $request->contract_end_date,
+            "Contract License" => $request->contract_license,
+            "Contract License Type" => $request->contract_license_type,
+            "Contract License Renewal Validity" => $request->contract_license_renewal_validity,
+            "Contract License Renewal Start Date" => $request->contract_license_renewal_start_date,
+            "Contract License Renewal End Date" => $request->contract_license_renewal_end_date,
+            "Presale Actions" => $request->presale_actions,
+            "Presale Type"=> $request->presale_type,
+            "Presale Options"=> $request->presale_options,
+        ];
+
+        foreach ($fields as $key => $value) {
+            if ($value !== null && $value !== '') {
+                if($value == -1){
+
+                }else{
+                    $meta[] = ["key" => $key, "value" => $value];
+                }
+            }
+        }
+
+        // Add Documents key with array of file paths if there are any documents
+        if (!empty($arrA)) {
+            $meta[] = ["key" => "Documents", "value" => $arrA];
+        }
+
+        $acstage = $request->pushToPresales;
+        if($acstage == 1){
+            $acstage = 2;
+        }else{
+            $acstage = 1;
+        }
+
+
+        try {
+
+            if($request->input('project_stage_id')== 2){
+                $account = Account::with('client')->find($request->id);
+
+                if($request->input('solution_name') != null && $request->input('solution_name') != ''){
+                    $account->business_name = $account->client->name. ' - '. $request->input('solution_name');
+                }else{
+                $account->business_name = $account->client->name;
+                }
+
+                $account->solution_name = $request->input('solution_name');
+                $account->solution_type_id = $request->input('solution_type_id');
+                $account->solution_id = $request->input('solution_id');
+                $account->solution_sub_type_id = $request->input('solution_subtype_id');
+                $account->stage = $acstage;
+                $account->presale_scoping_actions = $request->presale_actions;
+                $account->saveOrFail();
+            }
+
+            if($request->input('project_stage_id')== 10){
+                $account = Account::with('client')->find($request->id);
+                $account->crm = 1;
+                $account->saveOrFail();
+
+                $client = Client::find($account->client_id);
+                $client->is_existing = 1;
+                $client->saveOrFail();
+            }
+
+
+            $todaydate = Carbon::now()->format('F j, Y');
+
+            $projectinfo = new ProjectStageInformation();
+            $projectinfo->project_stage_id = $request->input('project_stage_id');
+            $projectinfo->account_id = $request->id;
+            $projectinfo->stage_information = "Account updated on $todaydate to stage $request->project_stage_id";
+            $projectinfo->meta = $meta;
+            $projectinfo->save();
+
+            return back()->with('success', 'Account Stage Updated Successfully');
+        } catch (\Exception $e) {
+            // dd($e);
+            // return back()->with('error',"$e");
+            // Handle the exception if saveOrFail fails
+            return back()->with('error',"Failed to Update Account Stage. Please try again.");
+        }
+
+    }
+
+    public function account($id){
+        $data1 = Account::where('accounts.id',$id)->select('accounts.*','users.first_name as accountmanagerfirstname','users.last_name as accountmanagerlastname','users.email as accountmanageremail','users.phone as accountmanagerphone','client_types.name as clienttype','clients.name as clientname','clients.id as clientid','clients.email as clientemail','clients.phone as clientphone','clients.location as clientlocation',
+        'clients.website_url as clientwebsiteurl','clients.contact_information as mainclienccontactinformation',
+        'solution_types.solution_type_name', 'solutions.solution_name', 'solution_sub_types.solution_sub_type_name')
+            ->leftJoin('solution_types', 'solution_types.id', '=', 'accounts.solution_type_id')
+            ->leftJoin('solutions', 'solutions.id', '=', 'accounts.solution_id')
+            ->leftJoin('solution_sub_types', 'solution_sub_types.id', '=', 'accounts.solution_sub_type_id')
+        ->join('users','users.id','=','accounts.user_id')
+        ->leftjoin('client_types','client_types.id','=','accounts.client_type_id')
+        ->join('clients','clients.id','=','accounts.client_id')
+        ->get();
+        foreach ($data1 as $item) {
+            // Fetch corresponding ProjectStageInformation for the current $item
+            $data2 = ProjectStageInformation::where('account_id', $item->id)->get();
+
+            // Transform $data2
+            $transformedData2 = $data2->map(function ($info) {
+                return [
+                    'stage_information' => $info->stage_information,
+                    'stage_meta' => $info->meta,
+                    'project_stage_id' => $info->project_stage_id,
+                    'project_stage_name' => ProjectStage::where('id',$info->project_stage_id)->first()->name,
+                    'project_stage_created_at' => $info->created_at,
+                ];
+            });
+
+            // Merge transformedData2 with current $item
+            $item->project_stage_information = $transformedData2->toArray();
+        }
+
+        // return $data1;
+
+        return Inertia::render('SalesPerson/Accounts/Businesses/one',[
+            'accounts' => $data1->toArray()
+        ]);
+
+    }
+
+
+    public function stg($i) {
+        $user_id = Auth::user()->id;
+        $clienttypes = ClientType::all();
+        $solutiontypes = SolutionType::all();
+        $solutions = Solution::all();
+        $solutionsubtypes = SolutionSubType::all();
+
+        $accounts = Account::with(['client', 'latestStage.projectStage'])
+            ->where('accounts.user_id', $user_id)
+            ->whereHas('latestStage.projectStage', function($query) use ($i) {
+                $query->where('project_stage_id', $i);
+            })
+            ->select('accounts.*', 'solution_types.solution_type_name', 'solutions.solution_name', 'solution_sub_types.solution_sub_type_name')
+            ->leftJoin('solution_types', 'solution_types.id', '=', 'accounts.solution_type_id')
+            ->leftJoin('solutions', 'solutions.id', '=', 'accounts.solution_id')
+            ->leftJoin('solution_sub_types', 'solution_sub_types.id', '=', 'accounts.solution_sub_type_id')
+            ->get();
+
+        $projectstages = ProjectStage::all();
+        $presales = User::where('role_id', 6)->where('is_active', 1)->get();
+
+        $passtitle = ProjectStage::where('id',$i)->first()->name;
+
+        return Inertia::render('SalesPerson/Accounts/Businesses/stage', [
+            'accounts' => $accounts,
+            'clienttypes' => $clienttypes,
+            'solutiontypes' => $solutiontypes,
+            'solutions' => $solutions,
+            'solutionsubtypes' => $solutionsubtypes,
+            'projectstages' => $projectstages,
+            'presales' => $presales,
+            'passtitle' => $passtitle,
+        ]);
+    }
+
+
+    public function update(Request $request){
+        $arrA = [];
+
+
+        if ($request->file('documents')) {
+            foreach ($request->file('documents') as $key => $document) {
+                if (isset($document['file'])) {
+                    $fileName = time() . '_' . $document['file']->getClientOriginalName();
+                    $document['file']->move(public_path('uploads'), $fileName);
+                        $file_path = '/uploads/'.$fileName;
+                    array_push($arrA,["key"=>$request->input('documents')[$key]['name'],"value"=>$file_path]);
+                }
+            }
+        }
+        $meta = [];
+
+        $fields = [
+            "Next Action" => $request->next_actions,
+            "Product Category" => $request->solution_name,
+            "Expected Sale Value" => $request->expected_sale_value,
+            "Projected Month Of Closure" => $request->projected_month_of_closure,
+            "Closure Probability" => $request->probability_of_closure,
+            "Estimated Month Of Closure" => $request->expected_month_of_closure,
+            "Deal Amount" => $request->deal_amount,
+            "Margins Projection" => $request->margins_projection,
+            "Project Delivery Date" => $request->project_delivery_date,
+            "Reasons For Loosing" => $request->reason_for_losing,
+            "Presales Assigned" => $request->presale_assigned,
+            "Site Surveys" => $request->site_survey_comments,
+            "Due Date" => $request->site_survey_due_date,
+            "Reasons For Overdue" => $request->reason_for_overdue,
+            "Next Steps" => $request->overdue_next_steps,
+            "contract_name" => $request->contract_name,
+            "contract_number" => $request->contract_number,
+            "contract_validity" => $request->contract_validity,
+            "contract_start_date" => $request->contract_start_date,
+            "contract_end_date" => $request->contract_end_date,
+            "contract_license" => $request->contract_license,
+            "contract_license_type" => $request->contract_license_type,
+            "contract_license_renewal_validity" => $request->contract_license_renewal_validity,
+            "contract_license_renewal_start_date" => $request->contract_license_renewal_start_date,
+            "contract_license_renewal_end_date" => $request->contract_license_renewal_end_date,
+        ];
+
+        foreach ($fields as $key => $value) {
+            if ($value !== null && $value !== '') {
+                if($value == -1){
+
+                }else{
+                    $meta[] = ["key" => $key, "value" => $value];
+                }
+            }
+        }
+
+        $acstage = $request->pushtopresales;
+        if($acstage == 1){
+            $acstage = 2;
+        }else{
+            $acstage = 1;
+        }
+        // Add Documents key with array of file paths if there are any documents
+        if (!empty($arrA)) {
+            $meta[] = ["key" => "Documents", "value" => $arrA];
+        }
+
+
+        try {
+            // Create a new client instance and save the validated data
+            $client = Account::find($request->account_id);
+            $client->business_name = $request->input('business_name');
+            $client->solution_type_id = $request->input('solution_type_id');
+            $client->solution_id = $request->input('solution_id');
+            $client->solution_sub_type_id = $request->input('solution_sub_type_id');
+            $client->contact_information = json_encode($request->input('contact_information'));
+
+            $client->saveOrFail();
+
+
+            $p = ProjectStageInformation::find($request->latest_stage_id);
+            $p->meta = $meta;
+            $p->saveOrFail();
+
+            return back()->with('success', 'Account Updated Successfully');
+        } catch (\Exception $e) {
+            // Handle the exception if saveOrFail fails
+            return back()->withErrors(['error' => "Failed to Update account. Please try again. $e"]);
+        }
+    }
+}
