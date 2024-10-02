@@ -1,0 +1,1 @@
+import{o as a,c as s,w as t,a as o,u as r,j as n}from"./app-C3TarfXx.js";const _={__name:"AuthenticationCardLogo",setup(c){return(l,e)=>(a(),s(r(n),{href:"/"},{default:t(()=>e[0]||(e[0]=[o("img",{src:"/xlogo1.png",class:"rounded-lg w-24 h-14",alt:"",srcset:""},null,-1)])),_:1}))}};export{_};
