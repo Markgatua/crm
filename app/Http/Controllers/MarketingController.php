@@ -26,7 +26,7 @@ class MarketingController extends Controller
             DB::raw('MAX(clients.phone) as clientphone'),
             DB::raw('MAX(clients.location) as clientlocation'),
             DB::raw('MAX(clients.website_url) as clientwebsiteurl'),
-            DB::raw('MAX(clients.contact_information::text) as clientmaincontactpersons') // Cast JSON field to text
+            DB::raw('MAX(CAST(clients.contact_information AS CHAR)) as clientmaincontactpersons')
         )
         ->join('users', 'users.id', '=', 'accounts.user_id')
         ->join('client_types', 'client_types.id', '=', 'accounts.client_type_id')

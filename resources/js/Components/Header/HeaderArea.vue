@@ -3,82 +3,54 @@ import { useSidebarStore } from "@/Stores/sidebar";
 import DropdownMessage from "./DropdownMessage.vue";
 import DropdownNotification from "./DropdownNotification.vue";
 import DropdownUser from "./DropdownUser.vue";
-import DarkModeSwitcher from "./DarkModeSwitcher.vue";
 import { Link } from "@inertiajs/vue3";
-
 
 const { toggleSidebar } = useSidebarStore();
 const sidebarStore = useSidebarStore();
 </script>
 
 <template>
-  <header class="sticky top-0 z-999 flex w-full bg-white drop-shadow-1">
-    <div
-      class="flex flex-grow items-center justify-between py-4 px-4 shadow-2 md:px-6 2xl:px-11"
-    >
-      <div class="flex items-center gap-2 sm:gap-4 lg:hidden">
-        <!-- Hamburger Toggle BTN -->
+  <header class="sticky top-0 z-999 flex w-full bg-white shadow-sm">
+    <div class="flex flex-grow items-center justify-between py-3 px-4 md:px-6">
+      <!-- Mobile hamburger + logo -->
+      <div class="flex items-center gap-3 lg:hidden">
         <button
-          class="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm lg:hidden"
-          @click="
-            () => {
-              console.log('Toggling Sidebar');
-              toggleSidebar();
-            }
-          "
+          class="p-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
+          @click="toggleSidebar()"
         >
-          <span class="relative block h-5.5 w-5.5 cursor-pointer">
-            <span class="block absolute right-0 h-full w-full">
-              <span
-                class="relative top-0 left-0 my-1 block h-0.5 w-0 rounded-sm bg-black delay-[0] duration-200 ease-in-out"
-                :class="{ '!w-full delay-300': !sidebarStore.isSidebarOpen }"
-              ></span>
-              <span
-                class="relative top-0 left-0 my-1 block h-0.5 w-0 rounded-sm bg-black delay-150 duration-200 ease-in-out"
-                :class="{ '!w-full delay-400': !sidebarStore.isSidebarOpen }"
-              ></span>
-              <span
-                class="relative top-0 left-0 my-1 block h-0.5 w-0 rounded-sm bg-black delay-200 duration-200 ease-in-out"
-                :class="{ '!w-full delay-500': !sidebarStore.isSidebarOpen }"
-              ></span>
-            </span>
-            <span class="block absolute right-0 h-full w-full rotate-45">
-              <span
-                class="absolute left-2.5 top-0 block h-full w-0.5 rounded-sm bg-black delay-300 duration-200 ease-in-out"
-                :class="{ '!h-0 delay-[0]': !sidebarStore.isSidebarOpen }"
-              ></span>
-              <span
-                class="delay-400 absolute left-0 top-2.5 block h-0.5 w-full rounded-sm bg-black duration-200 ease-in-out"
-                :class="{ '!h-0 delay-200': !sidebarStore.isSidebarOpen }"
-              ></span>
-            </span>
-          </span>
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
-        <!-- Hamburger Toggle BTN -->
-        <Link class="block flex-shrink-0 lg:hidden" href="/">
-          <img src="" alt="Logo" />
+        <Link href="/" class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-7 h-7 rounded-md bg-primary">
+            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+            </svg>
+          </div>
+          <span class="font-bold text-gray-800">CRM</span>
         </Link>
       </div>
-      <div class="hidden sm:block"></div>
 
-      <div class="flex items-center gap-3 2xsm:gap-7">
-        <ul class="flex items-center gap-2 2xsm:gap-4">
-          <!-- <li>
-            <DarkModeSwitcher />
-          </li> -->
+      <!-- Search bar (desktop) -->
+      <div class="hidden lg:flex items-center">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search..."
+            class="pl-9 pr-4 py-1.5 text-sm rounded-md border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-56"
+          />
+        </div>
+      </div>
 
-          <!-- Notification Menu Area -->
-          <DropdownNotification />
-          <!-- Notification Menu Area -->
-
-          <!-- Chat Notification Area -->
-          <DropdownMessage />
-          <!-- Chat Notification Area -->
-        </ul>
-
-        <!-- User Area -->
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <DropdownNotification />
+        <DropdownMessage />
         <DropdownUser />
-        <!-- User Area -->
       </div>
     </div>
   </header>

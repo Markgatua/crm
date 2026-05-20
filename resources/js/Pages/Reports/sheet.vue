@@ -45,21 +45,62 @@ for (const data of evaluationaccountsdata.value) {
     eaccountData.value.push(data);
 }
 
+function parseMeta(meta) {
+    if (!meta) return [];
+    if (typeof meta === 'string') {
+        try { return JSON.parse(meta); } catch { return []; }
+    }
+    return Array.isArray(meta) ? meta : [meta];
+}
+
+function parseMetas(metas) {
+    if (!metas) return [];
+    if (typeof metas === 'string') {
+        try { return JSON.parse(metas); } catch { return []; }
+    }
+    return Array.isArray(metas) ? metas : [];
+}
+
 watchEffect(() => {
     for (const data of accountData.value) {
-        if(JSON.parse(data.meta).find(item => item.key === 'Deal Amount')) {
-            myData.value.push(Number.parseFloat(JSON.parse(data.meta).find(item => item.key === 'Deal Amount').value.split(",").join("")));
+        const meta = parseMeta(data.meta);
+        const dealAmount = meta.find(item => item.key === 'Deal Amount');
+        if (dealAmount) {
+            myData.value.push(Number.parseFloat(dealAmount.value.split(",").join("")));
         }
     }
 })
 
 watchEffect(() => {
     for (const data of eaccountData.value) {
-        if(JSON.parse(data.meta).find(item => item.key === 'Expected Sale Value')) {
-            emyData.value.push(Number.parseFloat(JSON.parse(data.meta).find(item => item.key === 'Expected Sale Value').value.split(",").join("")));
+        const meta = parseMeta(data.meta);
+        const esv = meta.find(item => item.key === 'Expected Sale Value');
+        if (esv) {
+            emyData.value.push(Number.parseFloat(esv.value.split(",").join("")));
         }
     }
 })
+
+function getMetaValue(meta, key) {
+    const arr = parseMeta(meta);
+    const found = arr.find(item => item && item.key === key);
+    return found ? found.value : null;
+}
+
+function metaAmount(meta, key) {
+    const val = getMetaValue(meta, key);
+    if (!val) return null;
+    return parseFloat(String(val).split(',').join(''));
+}
+
+function sumMetaForUsers(data, userId, key) {
+    return data
+        .filter(item => item.user_id === userId)
+        .reduce((total, item) => {
+            const amt = metaAmount(item.meta, key);
+            return total + (amt || 0);
+        }, 0);
+}
 
 function formatClients(clients) {
     if (!clients) {
@@ -72,7 +113,7 @@ function formatClients(clients) {
 function printDiv() {
     const divToPrint = document.querySelector('.overflow-x-auto').innerHTML;
     const newWindow = window.open('', '', 'height=600,width=800');
-    newWindow.document.write('<html><head><title>Xtranet Accounts</title>');
+    newWindow.document.write('<html><head><title>CRM by sell.ke – Accounts</title>');
     newWindow.document.write('<style>body { font-family: Arial, sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }</style>'); // You can adjust or add styles here
     newWindow.document.write('</head><body >');
     newWindow.document.write(divToPrint);
@@ -145,210 +186,271 @@ function exportToExcel() {
 
 <template>
     <AppLayout title="Accounts Sheet">
-        <PageHeader title="Accounts Sheet" name="Accounts Sheet" />
 
-        <section class="bg-gray-50">
-            <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
-                <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                    <div class="w-full md:w-1/2">
-                        <!-- Add Print Button here -->
-                        <SecondaryButton @click="printDiv" class="inline-flex gap-2"><Icon icon="material-symbols-light:print-outline" class="h-6 w-6" />Print</SecondaryButton>
-                    </div>
-                    <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                        <!-- Add other buttons or actions here if needed -->
-                    </div>
+        <section class="px-4 sm:px-8 pb-12 space-y-8 mt-4">
+
+            <!-- Page header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">Accounts Sheet</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Pipeline overview across all account managers</p>
                 </div>
+                <button @click="printDiv"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 shadow-sm transition">
+                    <Icon icon="material-symbols-light:print-outline" class="h-5 w-5" />
+                    Print
+                </button>
+            </div>
 
+            <!-- Pipeline totals stat bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-gray-800">{{ totals.total }}</p>
+                    <p class="text-xs text-gray-500 mt-1 font-medium">Total</p>
+                </div>
+                <div class="bg-sky-50 rounded-2xl border border-sky-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-sky-600">{{ totals.prospects }}</p>
+                    <p class="text-xs text-sky-500 mt-1 font-medium">Prospects</p>
+                </div>
+                <div class="bg-violet-50 rounded-2xl border border-violet-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-violet-600">{{ totals.scooping }}</p>
+                    <p class="text-xs text-violet-500 mt-1 font-medium">Scoping</p>
+                </div>
+                <div class="bg-amber-50 rounded-2xl border border-amber-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-amber-600">{{ totals.evaluation }}</p>
+                    <p class="text-xs text-amber-500 mt-1 font-medium">Evaluation</p>
+                </div>
+                <div class="bg-orange-50 rounded-2xl border border-orange-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-orange-600">{{ totals.approval }}</p>
+                    <p class="text-xs text-orange-500 mt-1 font-medium">Approval</p>
+                </div>
+                <div class="bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm p-4 text-center">
+                    <p class="text-2xl font-bold text-emerald-600">{{ totals.closed }}</p>
+                    <p class="text-xs text-emerald-500 mt-1 font-medium">Closed</p>
+                </div>
+            </div>
+
+            <!-- Summary table -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    <h2 class="font-semibold text-gray-800">Pipeline by Account Manager</h2>
+                </div>
                 <div class="overflow-x-auto">
-                    <h2 class="px-3">SUMMARY TABLE</h2>
-                    <table class="w-full text-left text-sm  text-gray-500 border-separate border-spacing-y-4">
-                        <thead class="text-xs text-gray-700 text-center uppercase bg-gray-50">
-                            <tr>
-                                <th class="px-3 py-3">Account Manager</th>
-                                <th class="px-3 py-3">Total Accounts ({{ totals.total }})</th>
-                                <th class="px-3 py-3">Prospects ({{ totals.prospects }})</th>
-                                <th class="px-3 py-3">Scoping ({{ totals.scooping }})</th>
-                                <th class="px-3 py-3">Evaluation ({{ totals.evaluation }})</th>
-                                <th class="px-3 py-3">Approval ({{ totals.approval }})</th>
-                                <th class="px-3 py-3">Closed ({{ totals.closed }})</th>
-                                <th class="px-3 py-3">Lost ({{ totals.lost }})</th>
-                                <th class="px-3 py-3">Presales ({{ totals.presales }})</th>
-                                <th class="px-3 py-3">Projects ({{ totals.projects }})</th>
-                                <th class="px-3 py-3">Overdue ({{ totals.overdue }})</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="item in counts" :key="item.user_id">
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ item.first_name }} {{ item.last_name }}</td>
-                                <td class="px-6 py-4">{{ item.accounts_count }}</td>
-                                <td>{{ item.prospects_count }}</td>
-                                <td>{{ item.scooping_count }}</td>
-                                <td>{{ item.evaluation_count }}</td>
-                                <td>{{ item.approval_count }}</td>
-                                <td>{{ item.closed_count }}</td>
-                                <td>{{ item.lost_count }}</td>
-                                <td>{{ item.presales_count }}</td>
-                                <td>{{ item.projects_count }}</td>
-                                <td>{{ item.overdue_count }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="" v-for="(section, key) in accounts" :key="key">
-                        <div class="mx-auto max-w-screen-xl px-2 lg:px-8 pb-7">
-                            <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden">
-                                <h1 class="px-4 py-3 uppercase text-black font-bold">{{ key }}</h1>
-                                <table class="w-full text-left text-sm text-gray-500 border-separate border-spacing-y-4">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-            <tr>
-                <th class="px-6 py-3">Account Manager</th>
-                <th class="px-6 py-3">Count</th>
-
-                <th>Accounts</th>
-                <!-- <th>Client</th> -->
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="item in section" :key="item.user_id">
-                <td class="px-6 py-4 font-medium text-gray-900">{{ item.name }}</td>
-                <td class="px-6 py-4">{{ item.count }}</td>
-                <td>
-                    <table>
+                    <table class="min-w-full text-sm">
                         <thead>
-                            <th>Account Name</th>
-                            <!-- <th>Client</th> -->
-                            <th>Meta</th>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Account Manager</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-sky-500 uppercase tracking-wider">Prospects</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-violet-500 uppercase tracking-wider">Scoping</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-amber-500 uppercase tracking-wider">Evaluation</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-orange-500 uppercase tracking-wider">Approval</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-emerald-600 uppercase tracking-wider">Closed</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-red-400 uppercase tracking-wider">Lost</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-indigo-500 uppercase tracking-wider">Presales</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-teal-500 uppercase tracking-wider">Projects</th>
+                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-rose-500 uppercase tracking-wider">Overdue</th>
+                            </tr>
                         </thead>
-                        <tbody>
-                            <tr v-if="item.business_names" v-for="(name, index) in item.business_names.split('||')" :key="index">
-                                <td>{{ name }}</td>
-                                <!-- <td class=" border-b border-gray-300">
-                                    <div v-if="item.contact_informations" v-for="i in JSON.parse(item.contact_informations)[index]" :key="i.id">
-                                        <div v-if="i">
-                                            <p>{{ i.name !== null || i.name !== undefined || i.name !== '' ? i.name : '' }}</p>
-                                            <p>{{ i.email !== null || i.email !== undefined || i.email !== '' ? i.email : '' }}</p>
-                                            <p>{{ i.phone !== null || i.phone !== undefined || i.phone !== '' ? i.phone : '' }}</p>
-                                            <p>{{ i.designation !== null || i.designation !== undefined || i.designation !== '' ? i.designation : '' }}</p>
-                                        </div>
-                                    </div>
-                                </td> -->
-                                <td class="px-2 py-2 border-b border-gray-300">
-                                    <div v-if="item.metas" v-for="i in JSON.parse(item.metas)[index]">
-                                        <div v-if="i" v-for="newItem in i">
-                                            <p>
-                                                <span class="px-2">
-                                                    <span class="font-bold">{{ newItem["key"] }}</span>
-                                                    :
-                                                    <span v-if="typeof newItem['value'] === 'object'" v-for="document in newItem['value']">
-                                                        <a :href="document['value']" target="_blank" class="text-blue-500">{{ document["key"] }}</a>
-                                                    </span>
-                                                     <span v-else>{{ newItem["value"].toLocaleString() }}</span>
-                                                </span>
-                                                <hr/>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </td>
-
-
+                        <tbody class="divide-y divide-gray-50">
+                            <tr v-for="item in counts" :key="item.user_id" class="hover:bg-blue-50/20 transition-colors">
+                                <td class="px-5 py-3.5 font-semibold text-gray-800">{{ item.first_name }} {{ item.last_name }}</td>
+                                <td class="px-5 py-3.5 text-center font-bold text-gray-700">{{ item.accounts_count }}</td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-sky-50 text-sky-600 font-semibold text-xs">{{ item.prospects_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-50 text-violet-600 font-semibold text-xs">{{ item.scooping_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-50 text-amber-600 font-semibold text-xs">{{ item.evaluation_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-50 text-orange-600 font-semibold text-xs">{{ item.approval_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 font-semibold text-xs">{{ item.closed_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-50 text-red-500 font-semibold text-xs">{{ item.lost_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 font-semibold text-xs">{{ item.presales_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-teal-50 text-teal-600 font-semibold text-xs">{{ item.projects_count }}</span></td>
+                                <td class="px-5 py-3.5 text-center"><span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-50 text-rose-500 font-semibold text-xs">{{ item.overdue_count }}</span></td>
                             </tr>
                         </tbody>
                     </table>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                </div>
+            </div>
+
+            <!-- Pipeline stages breakdown -->
+            <div v-for="(section, key) in accounts" :key="key" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <h2 class="font-semibold text-gray-800 capitalize">{{ key }}</h2>
+                    </div>
+                    <span class="text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg font-medium">
+                        {{ section.reduce((s, i) => s + (i.count || 0), 0) }} accounts
+                    </span>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div v-for="item in section" :key="item.user_id" class="px-6 py-4">
+                        <!-- Rep header -->
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                    {{ (item.name?.[0] ?? '?').toUpperCase() }}
+                                </div>
+                                <span class="font-semibold text-gray-800 text-sm">{{ item.name }}</span>
                             </div>
+                            <span class="text-xs bg-gray-100 text-gray-600 font-semibold px-2.5 py-1 rounded-lg">{{ item.count }} account{{ item.count !== 1 ? 's' : '' }}</span>
                         </div>
-                    </div>
-
-                    <div>
-                        <div class="p-2">
-                            <h1 class="pl-6 uppercase text-black font-bold">Closed Deals</h1>
-                            <h1 class="pl-6 uppercase text-black font-bold">Total  Amount (KSH {{myData.reduce((a, b) => a + b, 0).toLocaleString()}})</h1>
-
+                        <!-- Account pills -->
+                        <div v-if="item.business_names" class="flex flex-wrap gap-2">
+                            <span v-for="(name, index) in item.business_names.split('||')" :key="index"
+                                class="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 text-xs text-gray-700 font-medium">
+                                {{ name }}
+                            </span>
                         </div>
-                        <div class="mx-auto max-w-screen-xl px-2 lg:px-8">
-                            <div v-for="id in userIds" class=" bg-white relative shadow-md sm:rounded-lg overflow-hidden pb-2 mb-6 px-10 border border-black rounded-md">
-                                <h1 class="px-4 py-3 uppercase text-black font-bold">
-                                    {{ closedaccountsdata.filter(item => item.user_id === id)[0].accountmanagerfirstname }}
-                                    {{ closedaccountsdata.filter(item => item.user_id === id)[0].accountmanagerlastname }}
-                                    Total ( Ksh.
-                                    <span v-if="closedaccountsdata.filter(item => item.user_id === id)">
-                                        {{ [...closedaccountsdata.filter(item => item.user_id === id).map(item => JSON.parse(item.meta).find(item => item.key === 'Deal Amount'))].filter(deal => deal).reduce((total, deal) => total + parseFloat(deal.value.split(',').join('')), 0).toLocaleString() }}
-                                    </span>
-                                    )
-                                    </h1>
-
-                        <table class="w-full text-left text-sm text-gray-500 border-separate border-spacing-y-4">
-                            <thead>
-                                <tr>
-                                    <th>Account</th>
-                                    <th>Solution</th>
-                                    <th>Amount</th>
-                                    <th>Date Closed</th>
-                                    <!-- <th>Total</th> -->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="account in closedaccountsdata.filter(item => item.user_id === id)">
-                                    <td>{{ account.business_name }}</td>
-                                    <td>{{ account.solution_type_name }}</td>
-                                    <td v-if="JSON.parse(account.meta).find(item => item.key === 'Deal Amount')">Ksh. {{ parseFloat(JSON.parse(account.meta).find(item => item.key === 'Deal Amount').value.split(",").join("")).toLocaleString() }}</td>
-                                    <td v-else></td>
-                                    <td>{{ account.pdate }}</td>
-                                    <!-- <td v-if="closedaccountsdata.filter(item => item.user_id === id)">Ksh. {{ [...closedaccountsdata.filter(item => item.user_id === id).map(item => JSON.parse(item.meta).find(item => item.key === 'Deal Amount'))].filter(deal => deal).reduce((total, deal) => total + parseFloat(deal.value.split(",").join("")), 0).toLocaleString() }}</td> -->
-                                </tr>
-                            </tbody>
-                        </table>
-                        </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="p-2">
-                            <h1 class="pl-6 uppercase text-black font-bold">Evaluation Deals</h1>
-                            <h1 class="pl-6 uppercase text-black font-bold">Total Amount (KSH {{emyData.reduce((a, b) => a + b, 0).toLocaleString()}})</h1>
-
-                        </div>
-                        <div class="mx-auto max-w-screen-xl px-2 lg:px-8">
-                            <div v-for="id in euserIds" class=" bg-white relative shadow-md sm:rounded-lg overflow-hidden pb-2 mb-6 px-10 border border-black rounded-md">
-                                <h1 class="px-4 py-3 uppercase text-black font-bold">
-                                    {{ evaluationaccountsdata.filter(item => item.user_id === id)[0].accountmanagerfirstname }}
-                                    {{ evaluationaccountsdata.filter(item => item.user_id === id)[0].accountmanagerlastname }}
-                                    Total ( Ksh.
-                                    <span v-if="evaluationaccountsdata.filter(item => item.user_id === id)">
-                                        {{ [...evaluationaccountsdata.filter(item => item.user_id === id).map(item => JSON.parse(item.meta).find(item => item.key === 'Expected Sale Value'))].filter(deal => deal).reduce((total, deal) => total + parseFloat(deal.value.split(',').join('')), 0).toLocaleString() }}
-                                    </span>
-                                    )
-                                    </h1>
-
-                        <table class="w-full text-left text-sm text-gray-500 border-separate border-spacing-y-4">
-                            <thead>
-                                <tr>
-                                    <th>Account</th>
-                                    <th>Solution</th>
-                                    <th>Amount</th>
-                                    <th>Date Updated</th>
-                                    <!-- <th>Total</th> -->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="account in evaluationaccountsdata.filter(item => item.user_id === id)">
-                                    <td>{{ account.business_name }}</td>
-                                    <td>{{ account.solution_type_name }}</td>
-                                    <td v-if="JSON.parse(account.meta).find(item => item.key === 'Expected Sale Value')">Ksh. {{ parseFloat(JSON.parse(account.meta).find(item => item.key === 'Expected Sale Value').value.split(",").join("")).toLocaleString() }}</td>
-                                    <td v-else></td>
-                                    <td>{{ account.pdate }}</td>
-                                    <!-- <td v-if="evaluationaccountsdata.filter(item => item.user_id === id)">Ksh. {{ [...evaluationaccountsdata.filter(item => item.user_id === id).map(item => JSON.parse(item.meta).find(item => item.key === 'Expected Sale Value'))].filter(deal => deal).reduce((total, deal) => total + parseFloat(deal.value.split(",").join("")), 0).toLocaleString() }}</td> -->
-                                </tr>
-                            </tbody>
-                        </table>
-                        </div>
-                        </div>
+                        <p v-else class="text-xs text-gray-400 italic">No accounts in this stage</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Closed Deals section -->
+            <div v-if="userIds.length > 0">
+                <!-- Section header with total -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        <h2 class="font-bold text-gray-800 text-lg">Closed Deals</h2>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 text-right">
+                        <p class="text-xs text-emerald-600 font-medium">Total Revenue</p>
+                        <p class="text-lg font-bold text-emerald-700">Ksh {{ myData.reduce((a, b) => a + b, 0).toLocaleString() }}</p>
+                    </div>
+                </div>
+                <!-- Per-rep cards -->
+                <div class="space-y-4">
+                    <div v-for="id in userIds" :key="id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <!-- Rep header -->
+                        <div class="px-6 py-4 bg-emerald-50/60 border-b border-emerald-100 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                                    {{ (closedaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerfirstname?.[0] ?? '?').toUpperCase() }}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">
+                                        {{ closedaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerfirstname }}
+                                        {{ closedaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerlastname }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ closedaccountsdata.filter(item => item.user_id === id)[0]?.accountmanageremail }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-emerald-600 font-medium">Total Closed</p>
+                                <p class="text-lg font-bold text-emerald-700">Ksh {{ sumMetaForUsers(closedaccountsdata, id, 'Deal Amount').toLocaleString() }}</p>
+                            </div>
+                        </div>
+                        <!-- Deals table -->
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50/60 border-b border-gray-100">
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Account / Client</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Solution</th>
+                                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Deal Amount</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date Closed</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr v-for="account in closedaccountsdata.filter(item => item.user_id === id)" :key="account.id"
+                                    class="hover:bg-emerald-50/20 transition-colors">
+                                    <td class="px-5 py-3.5">
+                                        <p class="font-semibold text-gray-800">{{ account.business_name }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ account.clientname }}</p>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <span v-if="account.solution_type_name" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
+                                            {{ account.solution_type_name }}
+                                        </span>
+                                        <span v-else class="text-gray-400 text-xs">—</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-right">
+                                        <span v-if="getMetaValue(account.meta, 'Deal Amount')" class="font-bold text-emerald-700">
+                                            Ksh {{ metaAmount(account.meta, 'Deal Amount').toLocaleString() }}
+                                        </span>
+                                        <span v-else class="text-gray-400 text-xs">—</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-gray-500 text-xs">{{ account.pdate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Deals section -->
+            <div v-if="euserIds.length > 0">
+                <!-- Section header with total -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                        <h2 class="font-bold text-gray-800 text-lg">Evaluation Deals</h2>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-100 rounded-xl px-4 py-2 text-right">
+                        <p class="text-xs text-amber-600 font-medium">Total Pipeline Value</p>
+                        <p class="text-lg font-bold text-amber-700">Ksh {{ emyData.reduce((a, b) => a + b, 0).toLocaleString() }}</p>
+                    </div>
+                </div>
+                <!-- Per-rep cards -->
+                <div class="space-y-4">
+                    <div v-for="id in euserIds" :key="id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <!-- Rep header -->
+                        <div class="px-6 py-4 bg-amber-50/60 border-b border-amber-100 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-bold">
+                                    {{ (evaluationaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerfirstname?.[0] ?? '?').toUpperCase() }}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">
+                                        {{ evaluationaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerfirstname }}
+                                        {{ evaluationaccountsdata.filter(item => item.user_id === id)[0]?.accountmanagerlastname }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ evaluationaccountsdata.filter(item => item.user_id === id)[0]?.accountmanageremail }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-amber-600 font-medium">Expected Value</p>
+                                <p class="text-lg font-bold text-amber-700">Ksh {{ sumMetaForUsers(evaluationaccountsdata, id, 'Expected Sale Value').toLocaleString() }}</p>
+                            </div>
+                        </div>
+                        <!-- Deals table -->
+                        <table class="min-w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50/60 border-b border-gray-100">
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Account / Client</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Solution</th>
+                                    <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Expected Value</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr v-for="account in evaluationaccountsdata.filter(item => item.user_id === id)" :key="account.id"
+                                    class="hover:bg-amber-50/20 transition-colors">
+                                    <td class="px-5 py-3.5">
+                                        <p class="font-semibold text-gray-800">{{ account.business_name }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ account.clientname }}</p>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <span v-if="account.solution_type_name" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium">
+                                            {{ account.solution_type_name }}
+                                        </span>
+                                        <span v-else class="text-gray-400 text-xs">—</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-right">
+                                        <span v-if="getMetaValue(account.meta, 'Expected Sale Value')" class="font-bold text-amber-700">
+                                            Ksh {{ metaAmount(account.meta, 'Expected Sale Value').toLocaleString() }}
+                                        </span>
+                                        <span v-else class="text-gray-400 text-xs">—</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-gray-500 text-xs">{{ account.pdate }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </section>
     </AppLayout>
 </template>

@@ -184,307 +184,264 @@ const destroy = (item) => {
 
 <template>
     <AppLayout title="CRM - Accounts">
-        <PageHeader title="CRM - Accounts" name="CRM - Accounts" />
-        <section class="px-4 mt-8 sm:px-8">
-            <!-- {{ clients }} -->
-            <section class="bg-gray-50 p-3 sm:p-5">
-                <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
-                    <div class="bg-white relative sm:rounded-lg overflow-hidden">
-                        <div
-                            class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                            <div class="w-full md:w-1/2">
+        <PageHeader title="CRM Accounts" name="CRM - Accounts">
+            <template #actions>
+                <button @click="openAddModal()"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-dark transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Account
+                </button>
+            </template>
+        </PageHeader>
 
-                            </div>
-                            <div
-                                class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-
-                                <div class="flex items-center space-x-3 w-full md:w-auto">
-
-
-                                    <PrimaryButton @click="openAddModal()">Add</PrimaryButton>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-             <DataTable :value="filteredClients" :paginator="true" :rows="10" :loading="loading">
-
-                    <form class="flex items-center w-1/2 mb-5">
-                        <label for="simple-search" class="sr-only">Search</label>
-                        <div class="relative w-full">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg aria-hidden="true" class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <input type="text" id="simple-search"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 "
-                            placeholder="Search" v-model="filters.global">
-                        </div>
-                    </form>
-
-
-                    <Column field="name" header="Name" :sortable="true">
-                  <template #body="slotProps">
-                    <div class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
-                      {{ slotProps.data.name }} <br /> <span>{{ slotProps.data.website_url }}</span>
-                    </div>
-                  </template>
-                </Column>
-                <Column field="industry.name" header="Industry" :sortable="true">
-                  <template #body="slotProps">
-                    <div class="px-4 py-3">{{ slotProps.data.industry?.name }}</div>
-                  </template>
-                </Column>
-                <Column field="location" header="Location" :sortable="true">
-                  <template #body="slotProps">
-                    <div class="px-4 py-3">{{ slotProps.data.location }}</div>
-                  </template>
-                </Column>
-                <Column field="phone" header="Phone" :sortable="true">
-                  <template #body="slotProps">
-                    <div class="px-4 py-3">{{ slotProps.data.phone }}</div>
-                  </template>
-                </Column>
-                <Column field="email" header="Email" :sortable="true">
-                  <template #body="slotProps">
-                    <div class="px-4 py-3">{{ slotProps.data.email }}</div>
-                  </template>
-                </Column>
-                <Column header="Actions">
-                  <template #body="slotProps">
-                    <PrimaryButton @click="editClient(slotProps.data)" class="p-button-secondary">Edit</PrimaryButton>
-                  </template>
-                </Column>
-                <Column header="Actions">
-                  <template #body="slotProps">
-                    <a :href="`/crm/account/businesses/${slotProps.data.id}`" ><WarningButton class="p-button-secondary">Businesses</WarningButton></a>
-                </template>
-                </Column>
-              </DataTable>
-                        </div>
-                    </div>
+        <section class="px-4 pb-10 sm:px-8 mt-4 space-y-4">
+            <!-- Search -->
+            <div class="flex items-center gap-3">
+                <div class="relative flex-1 max-w-sm">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                    </svg>
+                    <input type="text" v-model="filters.global" placeholder="Search accounts…"
+                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-            </section>
+                <span class="text-xs text-gray-400 bg-white border border-gray-100 px-3 py-2 rounded-xl shadow-sm font-medium">
+                    {{ filteredClients.length }} record{{ filteredClients.length !== 1 ? 's' : '' }}
+                </span>
+            </div>
+
+            <!-- Table card -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-gray-50/60">
+                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Industry</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                                <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <tr v-for="item in filteredClients" :key="item.id"
+                                class="hover:bg-blue-50/30 transition-colors group">
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                            {{ (item.name?.[0] ?? '?').toUpperCase() }}
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">{{ item.name }}</p>
+                                            <a v-if="item.website_url" :href="item.website_url" target="_blank"
+                                               class="text-xs text-primary hover:underline">{{ item.website_url }}</a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <span class="inline-flex px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-medium">
+                                        {{ item.industry?.name ?? '—' }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4 text-gray-600">{{ item.location }}</td>
+                                <td class="px-5 py-4">
+                                    <p class="text-gray-700">{{ item.email }}</p>
+                                    <p class="text-gray-400 text-xs">{{ item.phone }}</p>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button @click="editClient(item)"
+                                            class="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary-light transition"
+                                            title="Edit">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+                                        <a :href="`/crm/account/businesses/${item.id}`">
+                                            <button class="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-light text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition">
+                                                Businesses
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            </button>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="filteredClients.length === 0">
+                                <td colspan="5" class="px-5 py-16 text-center">
+                                    <p class="text-4xl mb-2">🏢</p>
+                                    <p class="text-gray-500 font-medium">No accounts found</p>
+                                    <p class="text-gray-400 text-xs mt-1">Try searching or add a new account.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </section>
+
         <!-- Create Modal -->
         <DialogModal :show="addingModal" @close="closeAddModal">
-            <template #title>
-                Create Account
-            </template>
-
-
+            <template #title>Add CRM Account</template>
             <template #content>
-                <h2 class="text-color-black">Select From Database</h2>
-                <div class="mt-4">
-                    <div>
-
+                <div class="space-y-4">
+                    <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                        <p class="text-xs font-semibold text-blue-700 mb-2">Select from existing database</p>
                         <CmkSelector
                             v-model:input="selectedValue"
-                            placeholder="Select an item"
+                            placeholder="Search existing client…"
                             inputType="text"
                             :max="50"
-                            :autoFocus="true"
+                            :autoFocus="false"
                             error=""
                             :items="clients"
                             @selectedItem="handleSelect"
                             displayKey="name"
                         />
-                    <InputError :message="form.errors.clent_id" class="mt-2" />
-                </div>
+                        <InputError :message="form.errors.clent_id" class="mt-1"/>
                     </div>
-                    <br><br>
-
-                <h2 class="text-color-black">Or Add Manually</h2>
-                <div class="mt-4 flex">
-                <TextInput v-model="form.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                <InputError :message="form.errors.name" class="mt-2" />
-            </div>
-
-                <div class="mt-4 flex">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="form.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                        <InputError :message="form.errors.phone" class="mt-2" />
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                        <span class="text-xs text-gray-400 font-medium">or add manually</span>
+                        <div class="flex-1 h-px bg-gray-100"></div>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="form.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                        <InputError :message="form.errors.email" class="mt-2" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Name</label>
+                        <TextInput v-model="form.name" type="text" class="block w-full" placeholder="Company name"/>
+                        <InputError :message="form.errors.name" class="mt-1"/>
                     </div>
-                </div>
-
-
-                <div class="mt-4">
-                    <TextInput v-model="form.website_url" type="text" class="mt-1 block w-full"
-                        placeholder="Website url" />
-                    <InputError :message="form.errors.website_url" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="form.location" type="text" class="mt-1 block w-full" placeholder="Location" />
-                    <InputError :message="form.errors.location" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <select v-model="form.industry_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Select Industry</option>
-                        <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{
-                industry.name }}</option>
-                    </select>
-                    <InputError :message="form.errors.industry_id" class="mt-2" />
-                </div>
-
-
-                <div class="mt-4">
-                    <p>Contacts</p>
-                    <InputError :message="form.errors.contact_information" class="mt-2" />
-                </div>
-
-                <div v-for="contact in form.contact_information" class="mt-4 flex items-center">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="contact.name" type="text" class="mt-1 block w-full" placeholder="Name" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Phone</label>
+                            <TextInput v-model="form.phone" type="text" class="block w-full" placeholder="Phone"/>
+                            <InputError :message="form.errors.phone" class="mt-1"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                            <TextInput v-model="form.email" type="email" class="block w-full" placeholder="Email"/>
+                            <InputError :message="form.errors.email" class="mt-1"/>
+                        </div>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.email" type="email" class="mt-1 block w-full" placeholder="Email" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Website</label>
+                        <TextInput v-model="form.website_url" type="text" class="block w-full" placeholder="https://"/>
+                        <InputError :message="form.errors.website_url" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Location</label>
+                        <TextInput v-model="form.location" type="text" class="block w-full" placeholder="Location"/>
+                        <InputError :message="form.errors.location" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.designation" type="text" class="mt-1 block w-full"
-                            placeholder="Designation" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Industry</label>
+                        <select v-model="form.industry_id" class="w-full rounded-lg border border-gray-200 py-2.5 px-3.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition">
+                            <option value="" disabled>Select Industry</option>
+                            <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{ industry.name }}</option>
+                        </select>
+                        <InputError :message="form.errors.industry_id" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <PrimaryButton class="ms-3 bg-red-500" @click="removeContact(contact)">
-                            <MdDelete />
-                        </PrimaryButton>
+                    <!-- Contacts -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-semibold text-gray-600">Contacts</label>
+                            <button @click="addContacts()" class="text-xs text-primary font-semibold hover:underline">+ Add contact</button>
+                        </div>
+                        <InputError :message="form.errors.contact_information" class="mt-1"/>
+                        <div v-for="(contact, ci) in form.contact_information" :key="ci"
+                             class="grid grid-cols-4 gap-2 mb-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                            <TextInput v-model="contact.name" type="text" class="block w-full" placeholder="Name"/>
+                            <TextInput v-model="contact.email" type="email" class="block w-full" placeholder="Email"/>
+                            <TextInput v-model="contact.phone" type="text" class="block w-full" placeholder="Phone"/>
+                            <div class="flex items-center gap-1">
+                                <TextInput v-model="contact.designation" type="text" class="block w-full" placeholder="Title"/>
+                                <button @click="removeContact(contact)" class="p-1.5 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- <div v-if="form.contact_information">
-                    <h5>{{ form.contact_information }}</h5>
-                </div> -->
-
-                <div class="mt-4 flex justify-end">
-                    <PrimaryButton class="ms-3" @click="addContacts()">
-                        Add contact
-                    </PrimaryButton>
-                </div>
-
             </template>
-
             <template #footer>
-                <SecondaryButton @click="closeAddModal()">
-                    Cancel
-                </SecondaryButton>
-
-                <PrimaryButton class="ms-3" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                    @click.prevent="save">
-                    Save
-                </PrimaryButton>
+                <SecondaryButton @click="closeAddModal()">Cancel</SecondaryButton>
+                <PrimaryButton class="ms-2" :class="{'opacity-25': form.processing}" :disabled="form.processing" @click.prevent="save">Save Account</PrimaryButton>
             </template>
         </DialogModal>
 
-
         <!-- Edit Modal -->
         <DialogModal :show="editingModal" @close="closeEditModal">
-            <template #title>
-                Edit client
-            </template>
-
-
+            <template #title>Edit Account</template>
             <template #content>
-                <div class="mt-4">
-                    <TextInput v-model="editForm.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                    <InputError :message="editForm.errors.name" class="mt-2" />
-                </div>
-                <div class="mt-4 flex">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="editForm.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                        <InputError :message="editForm.errors.phone" class="mt-2" />
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Name</label>
+                        <TextInput v-model="editForm.name" type="text" class="block w-full" placeholder="Name"/>
+                        <InputError :message="editForm.errors.name" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="editForm.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                        <InputError :message="editForm.errors.email" class="mt-2" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Phone</label>
+                            <TextInput v-model="editForm.phone" type="text" class="block w-full" placeholder="Phone"/>
+                            <InputError :message="editForm.errors.phone" class="mt-1"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                            <TextInput v-model="editForm.email" type="email" class="block w-full" placeholder="Email"/>
+                            <InputError :message="editForm.errors.email" class="mt-1"/>
+                        </div>
                     </div>
-                </div>
-
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.website_url" type="text" class="mt-1 block w-full"
-                        placeholder="Website url" />
-                    <InputError :message="editForm.errors.website_url" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.location" type="text" class="mt-1 block w-full" placeholder="Location" />
-                    <InputError :message="editForm.errors.location" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <select v-model="editForm.industry_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Select Industry</option>
-                        <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{industry.name }}</option>
-                    </select>
-                    <InputError :message="editForm.errors.industry_id" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.comments" type="text" class="mt-1 block w-full" placeholder="Comments" />
-
-                    <InputError :message="editForm.errors.comments" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <p>Contacts</p>
-                    <InputError :message="editForm.errors.contact_information" class="mt-2" />
-                </div>
-
-                <div v-for="contact in editForm.contact_information" class="mt-4 flex items-center">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="contact.name" type="text" class="mt-1 block w-full" placeholder="Name" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Website</label>
+                        <TextInput v-model="editForm.website_url" type="text" class="block w-full" placeholder="https://"/>
+                        <InputError :message="editForm.errors.website_url" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.email" type="email" class="mt-1 block w-full" placeholder="Email" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Location</label>
+                        <TextInput v-model="editForm.location" type="text" class="block w-full" placeholder="Location"/>
+                        <InputError :message="editForm.errors.location" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Industry</label>
+                        <select v-model="editForm.industry_id" class="w-full rounded-lg border border-gray-200 py-2.5 px-3.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition">
+                            <option value="" disabled>Select Industry</option>
+                            <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{ industry.name }}</option>
+                        </select>
+                        <InputError :message="editForm.errors.industry_id" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.designation" type="text" class="mt-1 block w-full"
-                            placeholder="Designation" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Comments</label>
+                        <TextInput v-model="editForm.comments" type="text" class="block w-full" placeholder="Comments"/>
+                        <InputError :message="editForm.errors.comments" class="mt-1"/>
                     </div>
-                    <div class="flex-1 ml-2">
-                        <PrimaryButton class="ms-3 bg-red-500" @click="removeEditContact(contact)">
-                            <MdDelete />
-                        </PrimaryButton>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-semibold text-gray-600">Contacts</label>
+                            <button @click="addEditContacts()" class="text-xs text-primary font-semibold hover:underline">+ Add contact</button>
+                        </div>
+                        <div v-for="(contact, ci) in editForm.contact_information" :key="ci"
+                             class="grid grid-cols-4 gap-2 mb-2 p-2 rounded-lg bg-gray-50 border border-gray-100">
+                            <TextInput v-model="contact.name" type="text" class="block w-full" placeholder="Name"/>
+                            <TextInput v-model="contact.email" type="email" class="block w-full" placeholder="Email"/>
+                            <TextInput v-model="contact.phone" type="text" class="block w-full" placeholder="Phone"/>
+                            <div class="flex items-center gap-1">
+                                <TextInput v-model="contact.designation" type="text" class="block w-full" placeholder="Title"/>
+                                <button @click="removeEditContact(contact)" class="p-1.5 rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="mt-4 flex justify-end">
-                    <PrimaryButton class="ms-3" @click="addEditContacts()">
-                        Add contact
-                    </PrimaryButton>
-                </div>
-
             </template>
-
-
-
-
-
             <template #footer>
-                <SecondaryButton @click="closeEditModal">
-                    Cancel
-                </SecondaryButton>
-
-                <PrimaryButton class="ms-3" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
-                    @click.prevent="update()">
-                    Update
-                </PrimaryButton>
+                <SecondaryButton @click="closeEditModal">Cancel</SecondaryButton>
+                <PrimaryButton class="ms-2" :class="{'opacity-25': form.processing}" :disabled="form.processing" @click.prevent="update()">Update</PrimaryButton>
             </template>
         </DialogModal>
     </AppLayout>

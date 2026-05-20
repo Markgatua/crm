@@ -160,7 +160,7 @@ function formatDate(date){
 function printDiv() {
     const divToPrint = document.querySelector('.overflow-x-auto').innerHTML;
     const newWindow = window.open('', '', 'height=600,width=800');
-    newWindow.document.write('<html><head><title>Xtranet Accounts</title>');
+    newWindow.document.write('<html><head><title>CRM by sell.ke – Accounts</title>');
     newWindow.document.write('<style>body { font-family: Arial, sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }</style>'); // You can adjust or add styles here
     newWindow.document.write('</head><body >');
     newWindow.document.write(divToPrint);

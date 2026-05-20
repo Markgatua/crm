@@ -1,229 +1,162 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import {Tab, TabGroup, TabList, TabPanel, TabPanels} from "@headlessui/vue";
-import {ref} from "vue";
-import {router, useForm, Link} from "@inertiajs/vue3";
+import { computed, ref } from "vue";
+import { Link } from "@inertiajs/vue3";
 import PageHeader from "@/CustomComponents/PageHeader.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import {IoMdAdd} from "vue3-icons/io";
-import DangerButton from "@/Components/DangerButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
-import InputError from "@/Components/InputError.vue";
-import DialogModal from "@/Components/DialogModal.vue";
-import TextInput from "@/Components/TextInput.vue";
-import CustomTextArea from "@/CustomComponents/CustomTextArea.vue";
 
-defineProps({
-    accounts: Object,
-    titlename: Object,
-})
-
-const form = useForm({
-    name: '',
-    description: '',
+const props = defineProps({
+    accounts: Array,
+    titlename: String,
 });
 
-const addingRoleModal = ref(false);
-const editingRoleModal = ref(false);
+const search = ref('');
 
-const editItem = ref(null)
+const filteredAccounts = computed(() => {
+    if (!search.value) return props.accounts;
+    const q = search.value.toLowerCase();
+    return props.accounts.filter(a =>
+        (a.business_name || '').toLowerCase().includes(q) ||
+        (a.clientname || '').toLowerCase().includes(q) ||
+        (a.accountmanagerfirstname || '').toLowerCase().includes(q) ||
+        (a.accountmanagerlastname || '').toLowerCase().includes(q)
+    );
+});
 
-const openAddRoleModal = () => {
-    addingRoleModal.value = true;
+const latestStage = (account) => {
+    if (!account.project_stage_information || !account.project_stage_information.length) return null;
+    return account.project_stage_information[account.project_stage_information.length - 1];
 };
 
-const saveRole = () => {
-    form.post(route('roles.store'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeAddRoleModal()
-            form.reset()
-        }
-    });
+const stageBadgeClass = (stageName) => {
+    const n = (stageName || '').toLowerCase();
+    if (n.includes('prospect')) return 'bg-blue-100 text-blue-700';
+    if (n.includes('scoop')) return 'bg-yellow-100 text-yellow-700';
+    if (n.includes('eval')) return 'bg-orange-100 text-orange-700';
+    if (n.includes('approv')) return 'bg-purple-100 text-purple-700';
+    if (n.includes('closed') || n.includes('won')) return 'bg-green-100 text-green-700';
+    return 'bg-gray-100 text-gray-600';
 };
 
-const closeAddRoleModal = () => {
-    addingRoleModal.value = false;
-    form.reset();
+const avatarBg = (name) => {
+    const colors = ['bg-blue-500','bg-indigo-500','bg-violet-500','bg-emerald-500','bg-amber-500','bg-rose-500','bg-cyan-500'];
+    let h = 0;
+    for (const c of (name || 'X')) h = (h * 31 + c.charCodeAt(0)) % colors.length;
+    return colors[h];
 };
 
-const editRole = (item) => {
-    editingRoleModal.value = true
-    editItem.value = item;
-    form.name=item.name;
-    form.description=item.description
-}
-
-const updateRole = () => {
-    form.put(route('roles.update',{ role: editItem.value }), {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeEditModal()
-            form.reset()
-        }
-    })
-}
-
-const closeEditModal = () => {
-    editingRoleModal.value = false;
-    form.reset();
-};
-
-const destroy=(item)=>{
-    if (!confirm('Are You sure your want to delete ' + item.name)){
-        return
-    }
-    router.delete(route('roles.destroy',{ role: item }))
-}
+const initials = (first, last) => ((first?.[0] || '') + (last?.[0] || '')).toUpperCase() || '?';
 </script>
 
 
 <template>
-    <AppLayout title="Accounts">
-       <PageHeader :title="titlename" optionalText="Accounts" name="Accounts" />
-       <section class="px-4 mt-8 sm:px-8">
-            <section class="bg-gray-50 p-3 sm:p-5">
-                <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div v-for="item in accounts" :key="item.id" class="border-b p-2">
-                            <div class="max-w-sm w-full lg:max-w-full lg:flex mb-2">
-                                <div class="w-1/2 bg-white rounded-lg sahdow-lg flex flex-col justify-center items-center">
-                                    <div class="text-gray-900 font-bold text-xl mb-2">Account Manager</div>
+    <AppLayout :title="titlename">
+        <PageHeader :title="titlename" optionalText="Clients" name="Client Accounts" />
 
-                                    <div>
-                                        <img class="object-center object-cover h-auto w-full" src="https://visualpharm.com/assets/527/Person-595b40b85ba036ed117da7ec.svg" alt="photo">
-                                    </div>
-                                    <div class="text-center py-8 sm:py-6">
-                                        <p class="text-xl text-gray-700 font-bold mb-1">{{  item.accountmanagerfirstname }} {{ item.accountmanagerlastname }}</p>
-                                        <p class="text-base text-gray-400 font-small">{{ item.accountmanageremail }}</p>
-                                        <p class="text-base text-gray-400 font-normal">{{ item.accountmanagerphone }}</p>
-                                    </div>
-                                </div>
+        <div class="px-4 sm:px-8 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-                                <div class="border-r border-b border-l border-gray-400 lg:border-l-0 lg:border-t lg:border-gray-400 bg-white rounded-b lg:rounded-b-none lg:rounded-r p-4 flex flex-col justify-between leading-normal">
-                                    <div class="mb-8">
-                                        <p class="text-gray-600 flex items-center">
-                                            <!-- <svg class="fill-current text-gray-500 w-3 h-3 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                <path d="M4 8V6a6 6 0 1 1 12 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-8c0-1.1.9-2 2-2h1zm5 6.73V17h2v-2.27a2 2 0 1 0-2 0zM7 6v2h6V6a3 3 0 0 0-6 0z" />
-                                            </svg>  -->
-                                            <span class="text-gray-900 font-bold mr-1">Stage: </span>
-                                            <span class="text-green-600 font-bold font-italic"> {{ item.project_stage_information.project_stage_name }}</span>
-                                        </p>
-                                        <div class="text-sky-500 font-bold text-xl mb-2"><Link :href="route('accounts.account', { id: item.id })">{{ item.business_name }}</Link></div>
-                                        <h4>CLIENT</h4>
-                                        <p class="text-gray-700 text-base overflow-hidden" style="-webkit-line-clamp: 4; max-height: calc(1.5em * 4);">{{ item.clientname }}</p>
-                                        <p class="text-gray-700 text-base overflow-hidden" style="-webkit-line-clamp: 4; max-height: calc(1.5em * 4);">{{ item.clientemail }}</p>
-                                        <p class="text-gray-700 text-base overflow-hidden" style="-webkit-line-clamp: 4; max-height: calc(1.5em * 4);">{{ item.clientphone }}</p>
-                                        <p class="text-gray-700 text-base overflow-hidden" style="-webkit-line-clamp: 4; max-height: calc(1.5em * 4);">{{ item.clientlocation }}</p>
-                                        <p class="text-gray-700 text-base overflow-hidden" style="-webkit-line-clamp: 4; max-height: calc(1.5em * 4);">{{ item.clientwebsiteurl }}</p>
-                                    </div>
-                                    <div class="text-gray-900 font-bold text-xl mb-2">Contact Person</div>
+                <!-- Table toolbar -->
+                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                    <h2 class="text-sm font-semibold text-gray-700">
+                        {{ accounts.length }} Account{{ accounts.length !== 1 ? 's' : '' }}
+                    </h2>
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input
+                            v-model="search"
+                            type="text"
+                            placeholder="Search accounts…"
+                            class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                        />
+                    </div>
+                </div>
 
-                                    <div v-for="it in JSON.parse(item.contact_information)" class="flex items-center">
-                                        <img class="w-10 h-10 rounded-full mr-4" src="/usericon.png" alt="Avatar of Jonathan Reinink">
-                                        <div class="">
-                                            <!-- <p class="text-black-900 text-bold leading-none">{{ JSON.parse(item.contact_information) }}</p> -->
-                                            <p class="text-gray-900 leading-none">{{ it.name }}</p>
-                                            <p class="text-gray-900 leading-none">{{ it.email }}</p>
-                                            <p class="text-gray-900 leading-none">{{ it.phone }}</p>
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Business</th>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Account Manager</th>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Type</th>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Current Stage</th>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Contact</th>
+                                <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <tr v-if="filteredAccounts.length === 0">
+                                <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400">No accounts found.</td>
+                            </tr>
+                            <tr
+                                v-for="item in filteredAccounts"
+                                :key="item.id"
+                                class="hover:bg-gray-50/70 transition-colors duration-100"
+                            >
+                                <!-- Business Name -->
+                                <td class="px-5 py-4">
+                                    <Link :href="route('accounts.account', { id: item.id })" class="font-semibold text-primary hover:underline">
+                                        {{ item.business_name }}
+                                    </Link>
+                                    <p class="text-xs text-gray-400 mt-0.5">{{ item.clientlocation }}</p>
+                                </td>
+
+                                <!-- Account Manager -->
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div :class="[avatarBg(item.accountmanagerfirstname), 'w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0']">
+                                            {{ initials(item.accountmanagerfirstname, item.accountmanagerlastname) }}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-800 text-xs">{{ item.accountmanagerfirstname }} {{ item.accountmanagerlastname }}</p>
+                                            <p class="text-xs text-gray-400">{{ item.accountmanageremail }}</p>
                                         </div>
                                     </div>
+                                </td>
 
-                                </div>
+                                <!-- Type -->
+                                <td class="px-5 py-4">
+                                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">
+                                        {{ item.clienttype || '—' }}
+                                    </span>
+                                </td>
 
-                            </div>
+                                <!-- Current Stage -->
+                                <td class="px-5 py-4">
+                                    <template v-if="latestStage(item)">
+                                        <span :class="['inline-flex px-2 py-0.5 rounded-full text-xs font-semibold', stageBadgeClass(latestStage(item).project_stage_name)]">
+                                            {{ latestStage(item).project_stage_name }}
+                                        </span>
+                                    </template>
+                                    <span v-else class="text-gray-300 text-xs">No stage</span>
+                                </td>
 
-                        </div>
-                    </div>
+                                <!-- Main Contact -->
+                                <td class="px-5 py-4">
+                                    <p class="text-xs font-medium text-gray-700">{{ item.main_contact_person_name || '—' }}</p>
+                                    <p class="text-xs text-gray-400">{{ item.main_contact_person_email }}</p>
+                                    <p class="text-xs text-gray-400">{{ item.main_contact_person_phone }}</p>
+                                </td>
 
+                                <!-- Actions -->
+                                <td class="px-5 py-4 text-right">
+                                    <Link
+                                        :href="route('accounts.account', { id: item.id })"
+                                        class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+                                    >
+                                        View
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </Link>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </section>
-        </section>
-         <!-- Create Modal -->
-         <DialogModal :show="addingRoleModal" @close="closeAddRoleModal">
-            <template #title>
-                Create Role
-            </template>
-
-            <template #content>
-                <div class="mt-4">
-                    <TextInput
-                        v-model="form.name"
-                        type="text"
-                        class="mt-1 block w-3/4"
-                        placeholder="name"
-                    />
-                    <InputError :message="form.errors.name" class="mt-2"/>
-                </div>
-                <div class="mt-4">
-                    <CustomTextArea
-                        v-model="form.description"
-                        type="text"
-                        class="mt-1 block w-3/4 max-h-36 min-h-36"
-                        placeholder="Description"
-                    />
-                    <InputError :message="form.errors.description" class="mt-2"/>
-                </div>
-            </template>
-
-            <template #footer>
-                <SecondaryButton @click="closeAddRoleModal">
-                    Cancel
-                </SecondaryButton>
-
-                <PrimaryButton
-                    class="ms-3"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                    @click.prevent="saveRole"
-                >
-                    Save
-                </PrimaryButton>
-            </template>
-        </DialogModal>
-
-
-        <!-- Edit Modal -->
-        <DialogModal :show="editingRoleModal" @close="closeEditModal">
-            <template #title>
-                Edit {{ editItem.name }}
-            </template>
-
-            <template #content>
-                <div class="mt-4">
-                    <TextInput
-                        v-model="form.name"
-                        type="text"
-                        class="mt-1 block w-3/4"
-                        placeholder="name"
-                    />
-                    <InputError :message="form.errors.name" class="mt-2"/>
-                </div>
-                <div class="mt-4">
-                    <CustomTextArea
-                        v-model="form.description"
-                        type="text"
-                        class="mt-1 block w-3/4 max-h-36 min-h-36"
-                        placeholder="Description"
-                    />
-                    <InputError :message="form.errors.description" class="mt-2"/>
-                </div>
-            </template>
-
-            <template #footer>
-                <SecondaryButton @click="closeEditModal">
-                    Cancel
-                </SecondaryButton>
-
-                <PrimaryButton
-                    class="ms-3"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                    @click.prevent="updateRole()"
-                >
-                    Update
-                </PrimaryButton>
-            </template>
-        </DialogModal>
+            </div>
+        </div>
     </AppLayout>
 </template>

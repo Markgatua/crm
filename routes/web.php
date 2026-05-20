@@ -58,7 +58,7 @@ Route::middleware([
     Route::resource('rolepermissions', RoleHasPermissionsController::class);
     // Route::resource('clients', ClientsController::class);
     Route::get('clients/all', [ClientsController::class, 'index'])->name('clients/all');
-    Route::get('clients/bs/{id}', [ClientsController::class, 'stg']);
+    Route::get('clients/bs/{id}', [ClientsController::class, 'stg'])->name('clients.bs');
     Route::get('clients/existing', [ClientsController::class, 'existing'])->name('clients/existing');
 
     Route::get('clients/new', [ClientsController::class, 'new'])->name('clients/new');
@@ -89,7 +89,7 @@ Route::middleware([
     Route::get('reports/accounts_sheet', [ReportsController::class, 'sheet'])->name('reports.accounts.sheet');
     Route::get('reports/custom', [ReportsController::class, 'customreportpage'])->name('reports.accounts.custom');
     Route::post('reports/create', [ReportsController::class, 'customreport'])->name('reports.custom.create');
-    
+
     Route::get('presales/scoping', [PresalesController::class, 'scoping'])->name('presales.scoping');
     Route::post('presales/update_stage', [PresalesController::class, 'updateStage'])->name('presales.update_stage');
     Route::get('presales/tender/rfq', [PresalesController::class, 'tenderOrRFQ'])->name('presales.tender.rfq');

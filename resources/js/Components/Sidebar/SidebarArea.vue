@@ -33,14 +33,15 @@ const menuGroups = ref([
     ],
   },
   {
-    name: "Settings",
-    icon: "material-symbols:settings-outline",
+    name: "Management",
+    icon: "la:users-cog",
     condition:
       page.props.auth.user.role_id === 1 || page.props.auth.user.role_id === 5,
     menuItems: [
       {
-        label: "Settings",
-        icon: "material-symbols:settings-outline",
+        label: "Management",
+        icon: "la:users-cog",
+
         condition:
           page.props.auth.user.role_id === 1 ||
           page.props.auth.user.role_id === 5,
@@ -314,7 +315,7 @@ const menuGroups = ref([
 
 <template>
   <aside
-    class="absolute left-0 top-0 z-9999 flex h-screen w-80 flex-col overflow-y-hidden bg-primary duration-300 ease-linear lg:static lg:translate-x-0"
+    class="absolute left-0 top-0 z-9999 flex h-screen w-64 flex-col overflow-y-hidden bg-slate-900 border-r border-slate-800 duration-300 ease-linear lg:static lg:translate-x-0"
     :class="{
       'translate-x-0': sidebarStore.isSidebarOpen,
       '-translate-x-full': !sidebarStore.isSidebarOpen,
@@ -322,35 +323,32 @@ const menuGroups = ref([
     ref="target"
   >
     <!-- SIDEBAR HEADER -->
-    <div
-      class="flex menuItems-center justify-between gap-2 px-6 py-5.5 lg:py-6.5"
-    >
-      <ApplicationLogo />
-
-      <button
-        class="block lg:hidden"
-        @click="sidebarStore.isSidebarOpen = false"
-      >
-        <Icon
-          class="text-white h-10 w-10"
-          icon="weui:back-filled"
-          :ssr="true"
-        />
+    <div class="flex items-center justify-between gap-2 px-5 py-4 border-b border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-base font-black text-white tracking-tight">CRM</span>
+          <p class="text-[10px] text-slate-400 leading-none">CRM by sell.ke</p>
+        </div>
+      </div>
+      <button class="block lg:hidden p-1.5 rounded-lg hover:bg-slate-800 transition" @click="sidebarStore.isSidebarOpen = false">
+        <Icon class="text-slate-400 h-4 w-4" icon="mdi:close" :ssr="true" />
       </button>
     </div>
-    <!-- SIDEBAR HEADER -->
+    <!-- /SIDEBAR HEADER -->
 
-    <div
-      class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear"
-    >
+    <div class="no-scrollbar flex flex-col overflow-y-auto flex-1">
       <!-- Sidebar Menu -->
-      <nav class="mt-5 py-4 px-4 lg:mt-4 lg:px-6">
-        <template v-for="menuGroup in menuGroups" :key="menuGroup.name">
+      <nav class="py-3 px-3 space-y-0.5">
+        <template v-for="(menuGroup, gi) in menuGroups" :key="menuGroup.name">
           <div v-if="menuGroup.condition">
-            <h3 class="mb-4 ml-4 text-sm font-medium text-gray">
-              {{ menuGroup.name.toUpperCase() }}
-            </h3>
-            <ul class="mb-6 flex flex-col gap-1.5">
+            <!-- thin divider between groups -->
+            <div v-if="gi > 0" class="my-2 mx-1 h-px bg-slate-800"></div>
+            <ul class="flex flex-col gap-0.5">
               <SidebarItem
                 v-for="(menuItem, index) in menuGroup.menuItems"
                 :item="menuItem"
@@ -361,18 +359,19 @@ const menuGroups = ref([
           </div>
         </template>
       </nav>
-      <!-- Sidebar Menu -->
+    </div>
 
-      <div
-        class="mx-auto mb-10 w-full max-w-60 rounded-sm bg-white py-6 px-4 text-center  shadow-default"
-      >
-        <h3 class="mb-1 font-semibold text-black">CRM</h3>
-        <p class="mb-4 text-xs text-black">This is version 0.0.3</p>
-        <span
-          class="flex items-center justify-center rounded-md bg-primary p-2 font-medium text-white hover:bg-opacity-90"
-        >
-          @XRX
-        </span>
+    <!-- Sidebar Footer: user chip -->
+    <div class="px-3 py-3 border-t border-slate-800">
+      <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-slate-800 transition cursor-default">
+        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          {{ ($page.props.auth.user.first_name?.[0] ?? '') + ($page.props.auth.user.last_name?.[0] ?? '') }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-white truncate">{{ $page.props.auth.user.first_name }} {{ $page.props.auth.user.last_name }}</p>
+          <p class="text-[10px] text-slate-400 truncate">{{ $page.props.auth.user.email }}</p>
+        </div>
+        <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
       </div>
     </div>
   </aside>

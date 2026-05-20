@@ -113,7 +113,7 @@ class DashboardController extends Controller
 
                     // Perform the query to get the counts
                     $accountCounts = Account::where('accounts.user_id',$user_id)->select(
-                            DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\') as month'),
+                            DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\') as month'),
                             DB::raw('COUNT(DISTINCT accounts.id) as accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 5 THEN accounts.id ELSE NULL END) as closed_accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 1 THEN accounts.id ELSE NULL END) as new_accounts_count'),
@@ -126,8 +126,8 @@ class DashboardController extends Controller
                         })
                         ->leftJoin('project_stage_information as psi', 'latest_psi.latest_id', '=', 'psi.id')
                         ->where('accounts.created_at', '>=', $currentDate->copy()->subMonths(12))
-                        ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'))
-                        ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'), 'asc')
+                        ->groupBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'))
+                        ->orderBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'), 'asc')
                         ->get();
 
                                                 // Convert the result to a collection and key by month for easier manipulation
@@ -160,12 +160,12 @@ class DashboardController extends Controller
 
                             // Perform the query to get the revenue counts
                             $revenueCounts = Revenue::select(
-                                    DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\') as month'),
+                                    DB::raw('DATE_FORMAT(date, \'%Y-%m\') as month'),
                                     DB::raw('SUM(amount) as total_revenue')
                                 )
                                 ->where('date', '>=', $currentDate->copy()->subMonths(12))
-                                ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'))
-                                ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'), 'asc')
+                                ->groupBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'))
+                                ->orderBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'), 'asc')
                                 ->get();
 
                             // Convert the result to a collection and key by month for easier manipulation
@@ -423,7 +423,7 @@ class DashboardController extends Controller
 
                     // Perform the query to get the counts
                     $accountCounts = Account::where('accounts.crm',1)->select(
-                            DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\') as month'),
+                            DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\') as month'),
                             DB::raw('COUNT(DISTINCT accounts.id) as accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 5 THEN accounts.id ELSE NULL END) as closed_accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 1 THEN accounts.id ELSE NULL END) as new_accounts_count'),
@@ -436,8 +436,8 @@ class DashboardController extends Controller
                         })
                         ->leftJoin('project_stage_information as psi', 'latest_psi.latest_id', '=', 'psi.id')
                         ->where('accounts.created_at', '>=', $currentDate->copy()->subMonths(12))
-                        ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'))
-                        ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'), 'asc')
+                        ->groupBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'))
+                        ->orderBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'), 'asc')
                         ->get();
 
                                                 // Convert the result to a collection and key by month for easier manipulation
@@ -470,12 +470,12 @@ class DashboardController extends Controller
 
                             // Perform the query to get the revenue counts
                             $revenueCounts = Revenue::select(
-                                    DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\') as month'),
+                                    DB::raw('DATE_FORMAT(date, \'%Y-%m\') as month'),
                                     DB::raw('SUM(amount) as total_revenue')
                                 )
                                 ->where('date', '>=', $currentDate->copy()->subMonths(12))
-                                ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'))
-                                ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'), 'asc')
+                                ->groupBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'))
+                                ->orderBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'), 'asc')
                                 ->get();
 
                             // Convert the result to a collection and key by month for easier manipulation
@@ -647,7 +647,7 @@ class DashboardController extends Controller
 
                     // Perform the query to get the counts
                     $accountCounts = Account::select(
-                            DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\') as month'),
+                            DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\') as month'),
                             DB::raw('COUNT(DISTINCT accounts.id) as accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 5 THEN accounts.id ELSE NULL END) as closed_accounts_count'),
                             DB::raw('COUNT(DISTINCT CASE WHEN psi.project_stage_id = 1 THEN accounts.id ELSE NULL END) as new_accounts_count'),
@@ -660,8 +660,8 @@ class DashboardController extends Controller
                         })
                         ->leftJoin('project_stage_information as psi', 'latest_psi.latest_id', '=', 'psi.id')
                         ->where('accounts.created_at', '>=', $currentDate->copy()->subMonths(12))
-                        ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'))
-                        ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', accounts.created_at), \'YYYY-MM\')'), 'asc')
+                        ->groupBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'))
+                        ->orderBy(DB::raw('DATE_FORMAT(accounts.created_at, \'%Y-%m\')'), 'asc')
                         ->get();
 
                     // Convert the result to a collection and key by month for easier manipulation
@@ -694,12 +694,12 @@ $months = $months->reverse()->values();
 
 // Perform the query to get the revenue counts
 $revenueCounts = Revenue::select(
-        DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\') as month'),
+        DB::raw('DATE_FORMAT(date, \'%Y-%m\') as month'),
         DB::raw('SUM(amount) as total_revenue')
     )
     ->where('date', '>=', $currentDate->copy()->subMonths(12))
-    ->groupBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'))
-    ->orderBy(DB::raw('TO_CHAR(DATE_TRUNC(\'month\', date::date), \'YYYY-MM\')'), 'asc')
+    ->groupBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'))
+    ->orderBy(DB::raw('DATE_FORMAT(date, \'%Y-%m\')'), 'asc')
     ->get();
 
 // Convert the result to a collection and key by month for easier manipulation

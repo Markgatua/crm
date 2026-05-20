@@ -13,42 +13,24 @@ const props = defineProps({
 });
 </script>
 
-
-
 <template>
-  <Head :title="title" />
+  <Head :title="title + ' | CRM'" />
   <ToastList />
   <Banner />
-  <!-- ===== Page Wrapper Start ===== -->
-  <div class="flex h-screen overflow-hidden">
-    <!-- ===== Sidebar Start ===== -->
+  <div class="flex h-screen overflow-hidden bg-[#F4F6F9]">
     <SidebarArea />
-    <!-- ===== Sidebar End ===== -->
-
-    <!-- ===== Content Area Start ===== -->
-    <div
-      class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
-    >
-      <!-- ===== Header Start ===== -->
+    <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
       <HeaderArea />
-      <!-- ===== Header End ===== -->
-
-      <!-- ===== Main Content Start ===== -->
       <main>
-        <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-          <!-- Page Heading -->
+        <div class="mx-auto max-w-screen-2xl p-4 md:p-6">
           <header v-if="$slots.header">
-            <div
-              class="mx-auto py-6 px-4 bg-gray-100 sm:px-6 lg:px-8 flex justify-between"
-            >
+            <div class="mb-4 py-3 px-4 bg-white rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
               <slot name="header" />
             </div>
           </header>
           <slot></slot>
         </div>
       </main>
-      <!-- ===== Main Content End ===== -->
     </div>
   </div>
-  <!-- ===== Page Wrapper End ===== -->
 </template>
