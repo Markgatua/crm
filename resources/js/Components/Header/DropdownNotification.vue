@@ -14,89 +14,92 @@ const notificationItems = ref([
   {
     route: '#',
     title: 'Edit your information in a swipe',
-    details:
-      'Sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.',
-    time: '12 May, 2025'
+    details: 'Sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.',
+    time: '12 May, 2025',
+    icon: '✏️',
   },
   {
     route: '#',
     title: 'It is a long established fact',
     details: 'that a reader will be distracted by the readable.',
-    time: '24 Feb, 2025'
+    time: '24 Feb, 2025',
+    icon: '📋',
   },
   {
     route: '#',
     title: 'There are many variations',
     details: 'of passages of Lorem Ipsum available, but the majority have suffered',
-    time: '04 Jan, 2025'
+    time: '04 Jan, 2025',
+    icon: '🔔',
   },
   {
     route: '#',
     title: 'There are many variations',
     details: 'of passages of Lorem Ipsum available, but the majority have suffered',
-    time: '01 Dec, 2024'
+    time: '01 Dec, 2024',
+    icon: '📊',
   }
 ])
 </script>
 
 <template>
-  <li class="relative" ref="target">
-    <span
-      class="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary"
-      to="#"
+  <div class="relative" ref="target">
+    <button
+      class="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
       @click.prevent="(dropdownOpen = !dropdownOpen), (notifying = false)"
     >
       <span
-        :class="!notifying && 'hidden'"
-        class="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1"
+        v-if="notifying"
+        class="absolute -top-0.5 -right-0.5 z-10 h-2 w-2 rounded-full bg-danger border-2 border-white"
       >
-        <span
-          class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"
-        ></span>
+        <span class="absolute inset-0 inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-60"></span>
       </span>
-
-      <svg
-        class="fill-current duration-300 ease-in-out"
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M16.1999 14.9343L15.6374 14.0624C15.5249 13.8937 15.4687 13.7249 15.4687 13.528V7.67803C15.4687 6.01865 14.7655 4.47178 13.4718 3.31865C12.4312 2.39053 11.0812 1.7999 9.64678 1.6874V1.1249C9.64678 0.787402 9.36553 0.478027 8.9999 0.478027C8.6624 0.478027 8.35303 0.759277 8.35303 1.1249V1.65928C8.29678 1.65928 8.24053 1.65928 8.18428 1.6874C4.92178 2.05303 2.4749 4.66865 2.4749 7.79053V13.528C2.44678 13.8093 2.39053 13.9499 2.33428 14.0343L1.7999 14.9343C1.63115 15.2155 1.63115 15.553 1.7999 15.8343C1.96865 16.0874 2.2499 16.2562 2.55928 16.2562H8.38115V16.8749C8.38115 17.2124 8.6624 17.5218 9.02803 17.5218C9.36553 17.5218 9.6749 17.2405 9.6749 16.8749V16.2562H15.4687C15.778 16.2562 16.0593 16.0874 16.228 15.8343C16.3968 15.553 16.3968 15.2155 16.1999 14.9343ZM3.23428 14.9905L3.43115 14.653C3.5999 14.3718 3.68428 14.0343 3.74053 13.6405V7.79053C3.74053 5.31553 5.70928 3.23428 8.3249 2.95303C9.92803 2.78428 11.503 3.2624 12.6562 4.2749C13.6687 5.1749 14.2312 6.38428 14.2312 7.67803V13.528C14.2312 13.9499 14.3437 14.3437 14.5968 14.7374L14.7655 14.9905H3.23428Z"
-          fill=""
-        />
+      <svg class="w-[18px] h-[18px] text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
-    </span>
+    </button>
 
-    <!-- Dropdown Start -->
-    <div
-      v-show="dropdownOpen"
-      class="absolute -right-27 mt-2.5 flex h-90 w-75 flex-col rounded-sm border border-stroke bg-white shadow-default sm:right-0 sm:w-80"
+    <transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0 scale-95 -translate-y-1"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100 scale-100 translate-y-0"
+      leave-to-class="opacity-0 scale-95 -translate-y-1"
     >
-      <div class="px-4.5 py-3">
-        <h5 class="text-sm font-medium text-black">Notification</h5>
+      <div
+        v-show="dropdownOpen"
+        class="absolute right-0 mt-2 w-80 max-h-[28rem] flex flex-col rounded-xl border border-gray-200/80 bg-white shadow-dropdown z-50 origin-top-right overflow-hidden"
+      >
+        <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+          <h5 class="text-[0.8125rem] font-bold text-gray-800">Notifications</h5>
+          <span class="badge badge-primary">{{ notificationItems.length }} new</span>
+        </div>
+
+        <ul class="flex-1 overflow-y-auto thin-scrollbar divide-y divide-gray-50">
+          <template v-for="(item, index) in notificationItems" :key="index">
+            <li>
+              <a
+                :href="item.route"
+                class="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50/80 transition-colors group"
+              >
+                <span class="text-lg flex-shrink-0 mt-0.5">{{ item.icon }}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[0.8125rem] font-semibold text-gray-800 group-hover:text-primary transition-colors leading-snug">
+                    {{ item.title }}
+                  </p>
+                  <p class="text-xs text-gray-400 mt-0.5 line-clamp-2">{{ item.details }}</p>
+                  <p class="text-[0.6875rem] text-gray-400 mt-1.5 font-medium">{{ item.time }}</p>
+                </div>
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <div class="border-t border-gray-100 px-5 py-2.5">
+          <a href="#" class="text-xs font-semibold text-primary hover:text-primary-dark transition-colors">View all notifications →</a>
+        </div>
       </div>
-
-      <ul class="flex h-auto flex-col overflow-y-auto">
-        <template v-for="(item, index) in notificationItems" :key="index">
-          <li>
-            <span
-              class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2"
-              :to="item.route"
-            >
-              <p class="text-sm">
-                <span class="text-black">{{ item.title }}</span>
-                {{ item.details }}
-              </p>
-
-              <p class="text-xs">{{ item.time }}</p>
-            </span>
-          </li>
-        </template>
-      </ul>
-    </div>
-    <!-- Dropdown End -->
-  </li>
+    </transition>
+  </div>
 </template>

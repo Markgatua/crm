@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class PermissionsSeeder extends Seeder
@@ -15,41 +14,6 @@ class PermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        // ── Roles ─────────────────────────────────────────────────────────────
-        $roles = [
-            ['id' => 1, 'name' => 'Super Admin', 'description' => 'Has full access to all modules and permissions.', 'is_active' => 1],
-            ['id' => 2, 'name' => 'Admin',       'description' => 'Has access to most modules except user/role/permission management.', 'is_active' => 1],
-        ];
-
-        foreach ($roles as $role) {
-            DB::table('roles')->updateOrInsert(
-                ['id' => $role['id']],
-                array_merge($role, ['created_at' => Carbon::now(), 'updated_at' => Carbon::now()])
-            );
-        }
-
-        // ── Super Admin user ───────────────────────────────────────────────────
-        $superAdmin = [
-            'first_name'   => 'Super',
-            'last_name'    => 'Admin',
-            'email'        => 'superadmin@xrx.com',
-            'phone'        => '0700000000',
-            'calling_code' => '+254',
-            'role_id'      => 1,
-            'department_id'=> 1,
-            'sales_rep'    => 0,
-            'is_active'    => 1,
-            'password'     => Hash::make('SuperAdmin@2024!'),
-            'created_at'   => Carbon::now(),
-            'updated_at'   => Carbon::now(),
-        ];
-
-        DB::table('users')->updateOrInsert(
-            ['email' => $superAdmin['email']],
-            $superAdmin
-        );
-
-        // ── Permissions ────────────────────────────────────────────────────────
         $permissions = [
             ["module" => "Permissions", "actions" => ["assign"]],
             ["module" => "Dashboard", "actions" => ["view"]],
@@ -68,7 +32,7 @@ class PermissionsSeeder extends Seeder
             foreach ($actions as $action) {
                 if (DB::table("permissions")->where("module", $module)->where("name", $action)->count() == 0) {
                     DB::table('permissions')->insert([
-                        "name" => $action,
+                        "name" => $action,  
                         "guard_name" => "web" . $module . $action,
                         "read_name" => $action.' '.$module,
                         "module" => $module,

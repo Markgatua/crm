@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/vue";
-import { ref, toDisplayString } from "vue";
+import { ref, toDisplayString, computed } from "vue";
 import { router, useForm, Link } from "@inertiajs/vue3";
 import PageHeader from "@/CustomComponents/PageHeader.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
@@ -16,7 +16,7 @@ import CustomTextArea from "@/CustomComponents/CustomTextArea.vue";
 import { MdDelete } from "vue3-icons/md";
 import toast from "@/Stores/toast.js"
 
-defineProps({
+const props = defineProps({
     clients: Object,
     industries: Object,
     personnels: Object
@@ -28,33 +28,28 @@ const form = useForm({
     email: '',
     phone: '',
     website_url: '',
-    industry_id: -1,
-    user_id: -1,
+    industry_id: '',
+    user_id: '',
     comments: '',
     contact_information: []
 });
 
-
 const editForm = useForm({
-    id:-1,
+    id: -1,
     name: '',
     location: '',
     email: '',
     phone: '',
     website_url: '',
-    industry_id: -1,
-    user_id: -1,
+    industry_id: '',
+    user_id: '',
     comments: '',
     contact_information: []
 });
 
-
 const contacts = ref([])
-//contact meta
-//name,email,phone,designation
 const addingModal = ref(false);
 const editingModal = ref(false);
-
 const editItem = ref(null)
 
 const openAddModal = () => {
@@ -89,13 +84,11 @@ const removeContact = (contact) => {
     form.contact_information = form.contact_information.filter(x => x.id != contact.id)
 }
 
-
 const editClient = (client) => {
     editingModal.value = true
-
+    editItem.value = client
     editForm.name = client.name
     editForm.id = client.id
-
     editForm.location = client.location
     editForm.email = client.email
     editForm.phone = client.phone
@@ -103,9 +96,9 @@ const editClient = (client) => {
     editForm.comments = client.comments
     editForm.industry_id = client.industry_id
     editForm.user_id = client.user_id
-    editForm.contact_information = JSON.parse(client.contact_information)
-
+    editForm.contact_information = client.contact_information ? JSON.parse(client.contact_information) : []
 }
+
 const save = () => {
     form.post(route('create.existing.user'), {
         preserveScroll: true,
@@ -124,34 +117,8 @@ const closeAddModal = () => {
     form.reset();
 };
 
-const enabled = ref(false)
-
-const toggleSwitch = (user) => {
-    router.put('user/switch', { id: user.id }, {
-        onBefore: (visit) => { },
-        onStart: (visit) => { },
-        onProgress: (progress) => { },
-        onSuccess: (page) => {
-
-        },
-        onError: (errors) => { },
-        onCancel: () => { },
-        onFinish: visit => { },
-    })
-    //   axios
-    //     .put(`user/switch`, {id:user.id})
-    //     .then((response) => {
-    //         console.log(user.id);
-    //       console.log("Switch updated successfully");
-    //     })
-    //     .catch((error) => {
-    //       console.error("Error updating switch:", error);
-    //     });
-}
-
-
 const update = () => {
-    editForm.put(route('update.existing.user', { user: editItem.value }), {
+    editForm.put(route('update.existing.user', { user: editItem.value.id }), {
         preserveScroll: true,
         onSuccess: () => {
             closeEditModal()
@@ -160,366 +127,350 @@ const update = () => {
     })
 }
 
-
 const closeEditModal = () => {
     editingModal.value = false;
-    form.reset();
+    editForm.reset();
 };
 
-const destroy = (item) => {
-    if (!confirm('Are You sure your want to delete ' + item.name)) {
-        return
-    }
-    router.delete(route('users.destroy', { User: item }))
-}
+// Search filtering on client attributes
+const search = ref('');
+const filteredClients = computed(() => {
+    if (!search.value) return props.clients ?? [];
+    const kw = search.value.toLowerCase();
+    return (props.clients ?? []).filter(c =>
+        `${c.name} ${c.email} ${c.phone} ${c.location} ${c.website_url}`.toLowerCase().includes(kw)
+    );
+});
+
+const avatarColors = ['bg-indigo-500','bg-blue-500','bg-emerald-500','bg-purple-500','bg-pink-500','bg-amber-500'];
+const avatarBg = (id) => avatarColors[id % avatarColors.length];
 </script>
 
-
 <template>
-    <AppLayout title="Clients">
-        <PageHeader title="Clients" name="Clients" />
-        <section class="px-4 mt-8 sm:px-8">
-            <!-- {{ clients }} -->
-            <section class="bg-gray-50 p-3 sm:p-5">
-                <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
-                    <div class="bg-white relative sm:rounded-lg overflow-hidden">
-                        <div
-                            class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                            <div class="w-full md:w-1/2">
-                                <form class="flex items-center">
-                                    <label for="simple-search" class="sr-only">Search</label>
-                                    <div class="relative w-full">
-                                        <div
-                                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <svg aria-hidden="true" class="w-5 h-5 text-gray-500" fill="currentColor"
-                                                viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                                <path fill-rule="evenodd"
-                                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <input type="text" id="simple-search"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 "
-                                            placeholder="Search">
-                                    </div>
-                                </form>
-                            </div>
-                            <div
-                                class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+    <AppLayout title="Existing Clients">
+        <PageHeader title="Existing Clients" name="Clients" />
 
-                                <div class="flex items-center space-x-3 w-full md:w-auto">
-                                    <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown"
-                                        class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200"
-                                        type="button">
-                                        <svg class="-ml-1 mr-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20"
-                                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                            <path clip-rule="evenodd" fill-rule="evenodd"
-                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
-                                        Actions
-                                    </button>
-                                    <div id="actionsDropdown"
-                                        class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow ">
-                                        <ul class="py-1 text-sm text-gray-700" aria-labelledby="actionsDropdownButton">
-                                            <li>
-                                                <a href="#" class="block py-2 px-4 hover:bg-gray-100">Mass Edit</a>
-                                            </li>
-                                        </ul>
-                                        <div class="py-1">
-                                            <a href="#"
-                                                class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Delete
-                                                all</a>
-                                        </div>
-                                    </div>
-                                    <button id="filterDropdownButton" data-dropdown-toggle="filterDropdown"
-                                        class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200"
-                                        type="button">
-                                        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
-                                            class="h-4 w-4 mr-2 text-gray-400" viewbox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        Filter
-                                        <svg class="-mr-1 ml-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20"
-                                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                            <path clip-rule="evenodd" fill-rule="evenodd"
-                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
-                                    </button>
-                                    <PrimaryButton @click="openAddModal()">Add</PrimaryButton>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-gray-500">
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
-                                    <tr>
-                                        <th scope="col" class="px-4 py-3">Name</th>
-                                        <th scope="col" class="px-4 py-3">Industry</th>
-                                        <th scope="col" class="px-4 py-3">Location</th>
-                                        <th scope="col" class="px-4 py-3">Phone</th>
-                                        <th scope="col" class="px-4 py-3">Email</th>
-                                        <!-- <th scope="col" class="px-4 py-3">Update</th> -->
-                                        <!-- <th scope="col" class="px-4 py-3">Delete</th> -->
-                                        <th scope="col" class="px-4 py-3">
-                                            <span class="sr-only">Actions</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="item in clients" :key="item.id" class="border-b">
-                                        <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
-                                            {{ item.name }} <br> <span>{{ item.website_url }}</span>
-
-                                        </th>
-                                        <td class="px-4 py-3">{{ item.industry.name ?? "" }}</td>
-                                        <td class="px-4 py-3">{{ item.location }}</td>
-
-                                        <td class="px-4 py-3">{{ item.phone }}</td>
-                                        <td class="px-4 py-3">{{ item.email ?? '' }}</td>
-
-                                        <td class="px-4 py-3">
-                                            <!-- <div v-for="(ci, index) in item.contact_information" :key="ci.id">
-                                        {{ ci.phone }}
-                                        </div> -->
-                                        </td>
-
-
-                                        <td class="px-4 py-3">
-                                            <PrimaryButton class="ms-3 bg-blue-500" @click="editClient(item)">
-                                                Edit
-                                            </PrimaryButton>
-                                        </td>
-                                        <!-- <td class="px-4 py-3">
-                                        <PrimaryButton @click.prevent="editUser(item)">Edit</PrimaryButton>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <DangerButton @click.prevent="destroy(item)">Delete</DangerButton>
-                                    </td> -->
-
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <div class="space-y-4">
+            <!-- Filter, Search, Action Bar -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-3 px-1">
+                <!-- Search -->
+                <div class="relative w-full md:w-1/2 max-w-md">
+                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input v-model="search" type="text" placeholder="Search clients by name, location, website..."
+                        class="w-full pl-9.5 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-all">
                 </div>
-            </section>
-        </section>
+
+                <!-- Actions & Trigger Add -->
+                <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+                    <span class="text-xs font-bold text-gray-500 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-xs">
+                        {{ filteredClients.length }} Client{{ filteredClients.length !== 1 ? 's' : '' }}
+                    </span>
+                    <PrimaryButton @click="openAddModal()">
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Client
+                        </div>
+                    </PrimaryButton>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white rounded-xl border border-gray-200/80 shadow-card overflow-hidden">
+                <div class="overflow-x-auto thin-scrollbar">
+                    <table class="min-w-full text-xs text-left">
+                        <thead>
+                            <tr class="border-b border-gray-200/80 bg-gray-50/50 text-gray-500 uppercase font-bold tracking-wider">
+                                <th class="px-6 py-3.5">Name & Website</th>
+                                <th class="px-6 py-3.5">Industry</th>
+                                <th class="px-6 py-3.5">Location</th>
+                                <th class="px-6 py-3.5">Phone Number</th>
+                                <th class="px-6 py-3.5">Email Address</th>
+                                <th class="px-6 py-3.5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="item in filteredClients" :key="item.id"
+                                class="hover:bg-gray-50/50 transition-colors group">
+                                <td class="px-6 py-4 font-bold text-gray-900">
+                                    <div class="flex items-center gap-3">
+                                        <div :class="`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-extrabold flex-shrink-0 shadow-sm ${avatarBg(item.id)}`">
+                                            {{ (item.name?.[0] ?? '?').toUpperCase() }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-gray-900 truncate">{{ item.name }}</p>
+                                            <a v-if="item.website_url" :href="item.website_url" target="_blank"
+                                               class="text-[10px] text-primary hover:underline font-medium block truncate max-w-[150px] mt-0.5">{{ item.website_url }}</a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="badge badge-primary font-bold">
+                                        {{ item.industry?.name ?? "N/A" }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-gray-600">{{ item.location }}</td>
+                                <td class="px-6 py-4 font-semibold text-gray-600">{{ item.phone }}</td>
+                                <td class="px-6 py-4 font-semibold text-gray-600">{{ item.email ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button @click="editClient(item)"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-light border border-primary/10 rounded-lg text-[10px] font-bold text-primary hover:bg-primary hover:text-white transition-all duration-200">
+                                        Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="filteredClients.length === 0">
+                                <td colspan="6" class="px-6 py-16 text-center">
+                                    <div class="max-w-xs mx-auto">
+                                        <p class="text-3xl mb-3">🏢</p>
+                                        <p class="text-gray-900 font-bold text-sm">No Existing Clients Found</p>
+                                        <p class="text-gray-400 text-xs mt-1 font-medium">Try modifying your search or click 'Add Client' to create one.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Create Modal -->
         <DialogModal :show="addingModal" @close="closeAddModal">
             <template #title>
-                Create Client
+                Create New Client
             </template>
             <template #content>
-                <div class="mt-4">
-                    <TextInput v-model="form.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                    <InputError :message="form.errors.name" class="mt-2" />
-                </div>
-                <div class="mt-4 flex">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="form.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                        <InputError :message="form.errors.phone" class="mt-2" />
+                <div class="space-y-4 mt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Client/Company Name</label>
+                        <TextInput v-model="form.name" type="text" class="w-full" placeholder="e.g. Acme Corp" />
+                        <InputError :message="form.errors.name" class="mt-1" />
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="form.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                        <InputError :message="form.errors.email" class="mt-2" />
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Phone Number</label>
+                            <TextInput v-model="form.phone" type="text" class="w-full" placeholder="e.g. +254 700 000 000" />
+                            <InputError :message="form.errors.phone" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                            <TextInput v-model="form.email" type="email" class="w-full" placeholder="e.g. hello@company.com" />
+                            <InputError :message="form.errors.email" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Website URL</label>
+                            <TextInput v-model="form.website_url" type="text" class="w-full" placeholder="e.g. https://company.com" />
+                            <InputError :message="form.errors.website_url" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Physical Location</label>
+                            <TextInput v-model="form.location" type="text" class="w-full" placeholder="e.g. Nairobi, Kenya" />
+                            <InputError :message="form.errors.location" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Industry / Sector</label>
+                            <select v-model="form.industry_id"
+                                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-sm transition-all py-2.5">
+                                <option value="" disabled>Select Industry</option>
+                                <option v-for="industry in industries" :key="industry.id" :value="industry.id">
+                                    {{ industry.name }}
+                                </option>
+                            </select>
+                            <InputError :message="form.errors.industry_id" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Account Manager</label>
+                            <select v-model="form.user_id"
+                                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-sm transition-all py-2.5">
+                                <option value="" disabled>Select Account Manager</option>
+                                <option v-for="manager in personnels" :key="manager.id" :value="manager.id">
+                                    {{ manager.first_name }} {{ manager.last_name }}
+                                </option>
+                            </select>
+                            <InputError :message="form.errors.user_id" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Comments & Notes</label>
+                        <TextInput v-model="form.comments" type="text" class="w-full" placeholder="e.g. Primary contact via partner portal..." />
+                        <InputError :message="form.errors.comments" class="mt-1" />
+                    </div>
+
+                    <!-- Contact details list inside creating -->
+                    <div class="border-t border-gray-100 pt-4 mt-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Key Contacts</label>
+                            <button type="button" @click="addContacts()" class="text-xs font-bold text-primary hover:text-primary-dark transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Add Contact
+                            </button>
+                        </div>
+                        <InputError :message="form.errors.contact_information" class="mb-3" />
+
+                        <div class="space-y-3">
+                            <div v-for="(contact, index) in form.contact_information" :key="contact.id" 
+                                 class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-lg bg-gray-50/50 border border-gray-100 relative">
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.name" type="text" class="w-full !py-1.5 !text-xs" placeholder="Contact Name" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.email" type="email" class="w-full !py-1.5 !text-xs" placeholder="Email" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.phone" type="text" class="w-full !py-1.5 !text-xs" placeholder="Phone" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.designation" type="text" class="w-full !py-1.5 !text-xs" placeholder="Designation" />
+                                </div>
+                                <button type="button" @click="removeContact(contact)" 
+                                        class="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all self-end sm:self-auto">
+                                    <MdDelete class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-
-                <div class="mt-4">
-                    <TextInput v-model="form.website_url" type="text" class="mt-1 block w-full"
-                        placeholder="Website url" />
-                    <InputError :message="form.errors.website_url" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="form.location" type="text" class="mt-1 block w-full" placeholder="Location" />
-                    <InputError :message="form.errors.location" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <label for="">Select Industry/Sector</label>
-                    <select v-model="form.industry_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Select Industry</option>
-                        <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{
-                industry.name }}</option>
-                    </select>
-                    <InputError :message="form.errors.industry_id" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <label for="">Select Account Manager</label>
-                    <select v-model="form.user_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Account Manager</option>
-                        <option v-for="manager in personnels" :key="manager.id" :value="manager.id">{{
-                             manager.first_name }} {{ manager.last_name }}</option>
-                    </select>
-                    <InputError :message="form.errors.user_id" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="form.comments" type="text" class="mt-1 block w-full" placeholder="Comments" />
-                    <InputError :message="form.errors.comments" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <p>Contacts</p>
-                    <InputError :message="form.errors.contact_information" class="mt-2" />
-                </div>
-
-                <div v-for="contact in form.contact_information" class="mt-4 flex items-center">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="contact.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.designation" type="text" class="mt-1 block w-full"
-                            placeholder="Designation" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <PrimaryButton class="ms-3 bg-red-500" @click="removeContact(contact)">
-                            <MdDelete />
-                        </PrimaryButton>
-                    </div>
-                </div>
-
-                <div class="mt-4 flex justify-end">
-                    <PrimaryButton class="ms-3" @click="addContacts()">
-                        Add contact
-                    </PrimaryButton>
-                </div>
-
             </template>
 
             <template #footer>
                 <SecondaryButton @click="closeAddModal()">
                     Cancel
                 </SecondaryButton>
-
                 <PrimaryButton class="ms-3" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
                     @click.prevent="save">
-                    Save
+                    Create Client
                 </PrimaryButton>
             </template>
         </DialogModal>
 
-
         <!-- Edit Modal -->
         <DialogModal :show="editingModal" @close="closeEditModal">
             <template #title>
-                Edit client
+                Edit Client Details
             </template>
-
-
             <template #content>
-                <div class="mt-4">
-                    <TextInput v-model="editForm.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                    <InputError :message="editForm.errors.name" class="mt-2" />
-                </div>
-                <div class="mt-4 flex">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="editForm.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                        <InputError :message="editForm.errors.phone" class="mt-2" />
+                <div class="space-y-4 mt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Client/Company Name</label>
+                        <TextInput v-model="editForm.name" type="text" class="w-full" placeholder="e.g. Acme Corp" />
+                        <InputError :message="editForm.errors.name" class="mt-1" />
                     </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="editForm.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                        <InputError :message="editForm.errors.email" class="mt-2" />
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Phone Number</label>
+                            <TextInput v-model="editForm.phone" type="text" class="w-full" placeholder="e.g. +254 700 000 000" />
+                            <InputError :message="editForm.errors.phone" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                            <TextInput v-model="editForm.email" type="email" class="w-full" placeholder="e.g. hello@company.com" />
+                            <InputError :message="editForm.errors.email" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Website URL</label>
+                            <TextInput v-model="editForm.website_url" type="text" class="w-full" placeholder="e.g. https://company.com" />
+                            <InputError :message="editForm.errors.website_url" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Physical Location</label>
+                            <TextInput v-model="editForm.location" type="text" class="w-full" placeholder="e.g. Nairobi, Kenya" />
+                            <InputError :message="editForm.errors.location" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Industry / Sector</label>
+                            <select v-model="editForm.industry_id"
+                                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-sm transition-all py-2.5">
+                                <option value="" disabled>Select Industry</option>
+                                <option v-for="industry in industries" :key="industry.id" :value="industry.id">
+                                    {{ industry.name }}
+                                </option>
+                            </select>
+                            <InputError :message="editForm.errors.industry_id" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Account Manager</label>
+                            <select v-model="editForm.user_id"
+                                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-sm transition-all py-2.5">
+                                <option value="" disabled>Select Account Manager</option>
+                                <option v-for="manager in personnels" :key="manager.id" :value="manager.id">
+                                    {{ manager.first_name }} {{ manager.last_name }}
+                                </option>
+                            </select>
+                            <InputError :message="editForm.errors.user_id" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Comments & Notes</label>
+                        <TextInput v-model="editForm.comments" type="text" class="w-full" placeholder="Comments" />
+                        <InputError :message="editForm.errors.comments" class="mt-1" />
+                    </div>
+
+                    <!-- Contact details list inside editing -->
+                    <div class="border-t border-gray-100 pt-4 mt-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Key Contacts</label>
+                            <button type="button" @click="addEditContacts()" class="text-xs font-bold text-primary hover:text-primary-dark transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Add Contact
+                            </button>
+                        </div>
+                        <InputError :message="editForm.errors.contact_information" class="mb-3" />
+
+                        <div class="space-y-3">
+                            <div v-for="(contact, index) in editForm.contact_information" :key="contact.id" 
+                                 class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 rounded-lg bg-gray-50/50 border border-gray-100 relative">
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.name" type="text" class="w-full !py-1.5 !text-xs" placeholder="Contact Name" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.email" type="email" class="w-full !py-1.5 !text-xs" placeholder="Email" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.phone" type="text" class="w-full !py-1.5 !text-xs" placeholder="Phone" />
+                                </div>
+                                <div class="flex-1">
+                                    <TextInput v-model="contact.designation" type="text" class="w-full !py-1.5 !text-xs" placeholder="Designation" />
+                                </div>
+                                <button type="button" @click="removeEditContact(contact)" 
+                                        class="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all self-end sm:self-auto">
+                                    <MdDelete class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.website_url" type="text" class="mt-1 block w-full"
-                        placeholder="Website url" />
-                    <InputError :message="editForm.errors.website_url" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.location" type="text" class="mt-1 block w-full" placeholder="Location" />
-                    <InputError :message="editForm.errors.location" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <label for="">Select Industry/Sector</label>
-                    <select v-model="editForm.industry_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Select Industry</option>
-                        <option v-for="industry in industries" :key="industry.id" :value="industry.id">{{industry.name }}</option>
-                    </select>
-                    <InputError :message="editForm.errors.industry_id" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <label for="">Select Account Manager</label>
-                    <select v-model="editForm.user_id"
-                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-                        <option value="" :disabled=true>Select Account Manager</option>
-                        <option v-for="manager in personnels" :key="manager.id" :value="manager.id">{{manager.first_name }} {{ manager.last_name }}</option>
-                    </select>
-                    <InputError :message="editForm.errors.user_id" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <TextInput v-model="editForm.comments" type="text" class="mt-1 block w-full" placeholder="Comments" />
-
-                    <InputError :message="editForm.errors.comments" class="mt-2" />
-                </div>
-
-                <div class="mt-4">
-                    <p>Contacts</p>
-                    <InputError :message="editForm.errors.contact_information" class="mt-2" />
-                </div>
-
-                <div v-for="contact in editForm.contact_information" class="mt-4 flex items-center">
-                    <div class="flex-1 mr-2">
-                        <TextInput v-model="contact.name" type="text" class="mt-1 block w-full" placeholder="Name" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.email" type="email" class="mt-1 block w-full" placeholder="Email" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.phone" type="text" class="mt-1 block w-full" placeholder="Phone" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <TextInput v-model="contact.designation" type="text" class="mt-1 block w-full"
-                            placeholder="Designation" />
-                    </div>
-                    <div class="flex-1 ml-2">
-                        <PrimaryButton class="ms-3 bg-red-500" @click="removeEditContact(contact)">
-                            <MdDelete />
-                        </PrimaryButton>
-                    </div>
-                </div>
-
-                <div class="mt-4 flex justify-end">
-                    <PrimaryButton class="ms-3" @click="addEditContacts()">
-                        Add contact
-                    </PrimaryButton>
-                </div>
-
             </template>
-
-
-
-
 
             <template #footer>
-                <SecondaryButton @click="closeEditModal">
+                <SecondaryButton @click="closeEditModal()">
                     Cancel
                 </SecondaryButton>
-
-                <PrimaryButton class="ms-3" :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
+                <PrimaryButton class="ms-3" :class="{ 'opacity-25': editForm.processing }" :disabled="editForm.processing"
                     @click.prevent="update()">
-                    Update
+                    Update Client
                 </PrimaryButton>
             </template>
         </DialogModal>

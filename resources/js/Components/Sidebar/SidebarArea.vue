@@ -27,7 +27,7 @@ const menuGroups = ref([
         isNamed: true,
         label: "Dashboard",
         route: "dashboard",
-        icon: "material-symbols:folder-outline",
+        icon: "material-symbols:dashboard-outline",
         condition: true,
       },
     ],
@@ -113,7 +113,7 @@ const menuGroups = ref([
         icon: "mdi:account-balance-wallet-outline",
         condition: page.props.auth.user.role_id === 1,
         children: [
-          { label: "All", route: "/clients/all", isNamed: false },
+          { label: "All", route: "clients/all", isNamed: false },
           { label: "Prospects", route: "/clients/bs/1", isNamed: false },
           { label: "Scooping", route: "/clients/bs/2", isNamed: false },
           { label: "Evaluation", route: "/clients/bs/3", isNamed: false },
@@ -148,7 +148,7 @@ const menuGroups = ref([
     menuItems: [
       {
         label: "Reports",
-        icon: "icomoon-free:stats-dots",
+        icon: "mdi:chart-box-outline",
         disclosure: true,
         condition:
           page.props.auth.user.role_id === 1 ||
@@ -246,7 +246,7 @@ const menuGroups = ref([
     menuItems: [
       {
         label: "My Reports",
-        icon: "icomoon-free:stats-dots",
+        icon: "mdi:chart-box-outline",
         condition: page.props.auth.user.role_id === 4,
         children: [
           {
@@ -266,7 +266,7 @@ const menuGroups = ref([
     menuItems: [
       {
         label: "SMART GOALS",
-        icon: "material-symbols:folder-delete-outline",
+        icon: "mdi:target",
         condition: page.props.auth.user.role_id === 4,
         children: [
           { label: "Set Monthly Goals", route: "dashboard", isNamed: true },
@@ -287,7 +287,7 @@ const menuGroups = ref([
     menuItems: [
       {
         label: "CRM Accounts",
-        icon: "mingcute:content-ai-fill",
+        icon: "mdi:handshake-outline",
         condition: page.props.auth.user.role_id === 1,
         route: "/crm/accounts",
         isNamed: false,
@@ -301,7 +301,7 @@ const menuGroups = ref([
     menuItems: [
       {
         label: "Contacts",
-        icon: "fluent-mdl2:contact-list",
+        icon: "mdi:contacts-outline",
         condition:
           page.props.auth.user.role_id === 7 ||
           page.props.auth.user.role_id === 1,
@@ -315,7 +315,7 @@ const menuGroups = ref([
 
 <template>
   <aside
-    class="absolute left-0 top-0 z-9999 flex h-screen w-64 flex-col overflow-y-hidden bg-slate-900 border-r border-slate-800 duration-300 ease-linear lg:static lg:translate-x-0"
+    class="absolute left-0 top-0 z-[9999] flex h-screen w-[16.5rem] flex-col overflow-y-hidden bg-sidebar duration-300 ease-linear lg:static lg:translate-x-0"
     :class="{
       'translate-x-0': sidebarStore.isSidebarOpen,
       '-translate-x-full': !sidebarStore.isSidebarOpen,
@@ -323,31 +323,33 @@ const menuGroups = ref([
     ref="target"
   >
     <!-- SIDEBAR HEADER -->
-    <div class="flex items-center justify-between gap-2 px-5 py-4 border-b border-slate-800">
-      <div class="flex items-center gap-2.5">
-        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
+    <div class="flex items-center justify-between gap-2 px-5 py-4 border-b border-white/[0.06]">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 shadow-lg shadow-primary/25">
           <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
           </svg>
         </div>
         <div>
-          <span class="text-base font-black text-white tracking-tight">CRM</span>
-          <p class="text-[10px] text-slate-400 leading-none">CRM by sell.ke</p>
+          <span class="text-[0.9375rem] font-black text-white tracking-tight">XCRM</span>
+          <p class="text-[10px] text-slate-500 leading-none font-medium">Enterprise CRM</p>
         </div>
       </div>
-      <button class="block lg:hidden p-1.5 rounded-lg hover:bg-slate-800 transition" @click="sidebarStore.isSidebarOpen = false">
+      <button class="block lg:hidden p-1.5 rounded-lg hover:bg-white/[0.06] transition" @click="sidebarStore.isSidebarOpen = false">
         <Icon class="text-slate-400 h-4 w-4" icon="mdi:close" :ssr="true" />
       </button>
     </div>
     <!-- /SIDEBAR HEADER -->
 
-    <div class="no-scrollbar flex flex-col overflow-y-auto flex-1">
+    <div class="no-scrollbar flex flex-col overflow-y-auto flex-1 thin-scrollbar">
       <!-- Sidebar Menu -->
       <nav class="py-3 px-3 space-y-0.5">
         <template v-for="(menuGroup, gi) in menuGroups" :key="menuGroup.name">
           <div v-if="menuGroup.condition">
-            <!-- thin divider between groups -->
-            <div v-if="gi > 0" class="my-2 mx-1 h-px bg-slate-800"></div>
+            <!-- Section label for non-first groups -->
+            <div v-if="gi > 0" class="mt-4 mb-2 px-3">
+              <p class="text-[0.625rem] font-bold text-slate-600 uppercase tracking-[0.08em]">{{ menuGroup.name }}</p>
+            </div>
             <ul class="flex flex-col gap-0.5">
               <SidebarItem
                 v-for="(menuItem, index) in menuGroup.menuItems"
@@ -362,16 +364,16 @@ const menuGroups = ref([
     </div>
 
     <!-- Sidebar Footer: user chip -->
-    <div class="px-3 py-3 border-t border-slate-800">
-      <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-slate-800 transition cursor-default">
-        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+    <div class="px-3 py-3 border-t border-white/[0.06]">
+      <div class="flex items-center gap-2.5 px-2 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors cursor-default">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
           {{ ($page.props.auth.user.first_name?.[0] ?? '') + ($page.props.auth.user.last_name?.[0] ?? '') }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-xs font-semibold text-white truncate">{{ $page.props.auth.user.first_name }} {{ $page.props.auth.user.last_name }}</p>
-          <p class="text-[10px] text-slate-400 truncate">{{ $page.props.auth.user.email }}</p>
+          <p class="text-[10px] text-slate-500 truncate">{{ $page.props.auth.user.email }}</p>
         </div>
-        <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+        <span class="pulse-dot flex-shrink-0"></span>
       </div>
     </div>
   </aside>

@@ -4,11 +4,24 @@ defineProps({
         type: String,
         default: 'button',
     },
+    loading: {
+        type: Boolean,
+        default: false,
+    },
 });
 </script>
 
 <template>
-    <button :type="type" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg font-semibold text-xs text-gray-600 uppercase tracking-widest shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+    <button
+        :type="type"
+        :disabled="loading"
+        class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 rounded-lg font-semibold text-[0.8125rem] text-gray-600 shadow-xs hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-1 disabled:opacity-40 disabled:pointer-events-none transition-all duration-200"
+        :class="{ 'opacity-60 pointer-events-none': loading }"
+    >
+        <svg v-if="loading" class="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
         <slot />
     </button>
 </template>

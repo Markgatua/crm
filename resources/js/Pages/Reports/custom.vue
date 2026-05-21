@@ -70,13 +70,6 @@ watch(
   }
 );
 
-const formatDate = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
 const today = new Date().toISOString().split("T")[0];
 
 const save = () => {
@@ -87,263 +80,154 @@ const save = () => {
     form.enddate = today;
   }
 
-
-
-  const formattedStartDate = form.startdate;
-  const formattedEndDate = form.enddate;
-
-  form.startdate = formattedStartDate;
-  form.enddate = formattedEndDate;
-  // Include formatted dates in the form data
   form.post(route("reports.custom.create"), {
     data: {
       ...form.data(),
-      start_date: formattedStartDate,
-      end_date: formattedEndDate,
+      start_date: form.startdate,
+      end_date: form.enddate,
     },
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
-      // location.reload();
     },
     onError: (e) => {
       alert(e);
-      toast.add(e);
     },
   });
 };
-
-function printDiv() {
-  const divToPrint = document.querySelector(".overflow-x-auto").innerHTML;
-  const newWindow = window.open("", "", "height=600,width=800");
-  newWindow.document.write("<html><head><title>CRM by sell.ke – Accounts</title>");
-  newWindow.document.write(
-    "<style>body { font-family: Arial, sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }</style>"
-  ); // You can adjust or add styles here
-  newWindow.document.write("</head><body >");
-  newWindow.document.write(divToPrint);
-  newWindow.document.write("</body></html>");
-  newWindow.document.close();
-  newWindow.focus();
-  newWindow.print();
-}
-
-function exportToExcel() {
-    const workbook = XLSX.utils.book_new();
-
-    // Export accounts
-    if (props.accounts) {
-        const accountsWorksheet = XLSX.utils.json_to_sheet(props.accounts);
-        XLSX.utils.book_append_sheet(workbook, accountsWorksheet, "Accounts");
-    }
-
-    // Export totals
-    if (props.totals) {
-        const totalsWorksheet = XLSX.utils.json_to_sheet([props.totals]);
-        XLSX.utils.book_append_sheet(workbook, totalsWorksheet, "Totals");
-    }
-
-    // Export counts
-    if (props.counts) {
-        const countsWorksheet = XLSX.utils.json_to_sheet([props.counts]);
-        XLSX.utils.book_append_sheet(workbook, countsWorksheet, "Counts");
-    }
-
-    // Export individual account data
-    const accountTypes = [
-        { type: 'closed', label: 'Closed' },
-        { type: 'evaluation', label: 'Evaluation' },
-        { type: 'approval', label: 'Approval' },
-        { type: 'prospect', label: 'Prospect' },
-        { type: 'scoping', label: 'Scoping' },
-        { type: 'lost', label: 'Lost' },
-        { type: 'overdue', label: 'Overdue' },
-        { type: 'projects', label: 'Projects' }
-    ];
-
-    for (const { type, label } of accountTypes) {
-        const data = props[`${type}accountsdata`];
-        if (data && data.length > 0) {
-            const worksheet = XLSX.utils.json_to_sheet(data);
-            XLSX.utils.book_append_sheet(workbook, worksheet, `${label} Accounts`);
-        }
-    }
-
-    // Export start and end dates
-    if (props.startdate && props.enddate) {
-        const dateWorksheet = XLSX.utils.json_to_sheet([
-            { 'Start Date': formatDate(props.startdate), 'End Date': formatDate(props.enddate) }
-        ]);
-        XLSX.utils.book_append_sheet(workbook, dateWorksheet, "Date Range");
-    }
-
-    // Write the workbook to a file
-    XLSX.writeFile(workbook, "accounts_data.xlsx");
-}
 </script>
 
 <template>
-  <AppLayout title="Custom Report">
-    <PageHeader title="Custom Report" name="Custom Report" />
-    <section class="bg-white-50">
-      <div class="max-w-screen-xl pt-8 lg:px-10">
-        <SecondaryButton @click="printDiv" class="inline-flex gap-2"><Icon icon="material-symbols-light:print-outline" class="h-6 w-6" />Print</SecondaryButton>
-        <div class=" py-4 mb-10">
-        <ul class="list-disc pl-5 space-y-2 text-gray-700 bg-blue-50 p-4 rounded-lg shadow-md">
-          <li class="hover:text-blue-600 transition-colors duration-200">
-            To generate a report for all Account Managers, leave the select box empty.
-          </li>
-          <li class="hover:text-blue-600 transition-colors duration-200">
-            To generate a report with all solutions, leave the Solution Category box empty.
-          </li>
-          <li class="hover:text-blue-600 transition-colors duration-200">
-            To generate a report for all Stages, leave the Stages box empty.
-          </li>
-        </ul>
-          <div class="flex flex-wrap space-x-4">
-            <!-- Solution Category -->
-            <div class="mt-4 flex-1">
-              <label for="">Select Solution Category</label>
-              <select
-                v-model="form.solution_type_id"
-                class="w-full rounded border border-stroke bg-gray py-3 px-4.5 font-normal text-black focus:border-primary focus-visible:outline-none"
-              >
-                <option value="" disabled>Select Solution Category</option>
-                <option
-                  v-for="solutiontype in props.solutiontypes"
-                  :key="solutiontype.id"
-                  :value="solutiontype.id"
-                >
-                  {{ solutiontype.solution_type_name }}
-                </option>
-              </select>
-              <InputError
-                :message="form.errors.solution_type_id"
-                class="mt-2"
-              />
-            </div>
+  <AppLayout title="Custom Report Builder">
+    <PageHeader title="Custom Report Builder" name="Custom Report" />
 
-            <!-- Solution -->
-            <div class="mt-4 flex-1" v-if="showSolutionField">
-              <label for="">Select Solution</label>
-              <select
-                v-model="form.solution_id"
-                class="w-full rounded border border-stroke bg-gray py-3 px-4.5 font-normal text-black focus:border-primary focus-visible:outline-none"
-              >
-                <option value="" disabled>Select Solution</option>
-                <option
-                  v-for="solution in filteredSolutions"
-                  :key="solution.id"
-                  :value="solution.id"
-                >
-                  {{ solution.solution_name }}
-                </option>
-              </select>
-              <InputError :message="form.errors.solution_id" class="mt-2" />
-            </div>
-
-            <!-- Solution Subtype -->
-            <div class="mt-4 flex-1" v-if="showSolutionSubtypeField">
-              <label for="">Select Solution Subtype</label>
-              <select
-                v-model="form.solution_subtype_id"
-                class="w-full rounded border border-stroke bg-gray py-3 px-4.5 font-normal text-black focus:border-primary focus-visible:outline-none"
-              >
-                <option value="" disabled>Select Solution Subtype</option>
-                <option
-                  v-for="subtype in filteredSolutionSubtypes"
-                  :key="subtype.id"
-                  :value="subtype.id"
-                >
-                  {{ subtype.solution_sub_type_name }}
-                </option>
-              </select>
-              <InputError
-                :message="form.errors.solution_subtype_id"
-                class="mt-2"
-              />
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Info banner -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-gradient-to-br from-primary-light/40 to-blue-50/20 border border-primary/10 rounded-xl p-5 shadow-card">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="p-1 rounded-lg bg-primary-light text-primary">
+              <Icon icon="material-symbols:info-outline" class="h-5 w-5" />
+            </span>
+            <h3 class="font-extrabold text-gray-900 text-xs uppercase tracking-wider">Report Guidelines</h3>
           </div>
-          <div class="flex flex-wrap space-x-4">
-            <!-- Solution Category -->
-            <div class="mt-4 flex-1">
-              <label for="">Select Account Manager</label>
-              <select
-                v-model="form.accountmanager"
-                class="w-full rounded border border-stroke bg-gray py-3 px-4.5 font-normal text-black focus:border-primary focus-visible:outline-none"
-              >
-                <option value="" disabled>Select Account Manager</option>
-                <option
-                  v-for="accountmanager in props.accountmanagers"
-                  :key="accountmanager.id"
-                  :value="accountmanager.id"
-                >
-                  {{ accountmanager.first_name }} {{ accountmanager.last_name }}
-                </option>
-              </select>
-              <InputError :message="form.errors.accountmanager" class="mt-2" />
-            </div>
-
-            <div class="mt-4 flex-1">
-              <label for="start_date">Start Date</label>
-              <TextInput
-                id="start_date"
-                v-model="form.startdate"
-                type="date"
-                class="mt-1 block w-full"
-              />
-            </div>
-            <div class="mt-4 flex-1">
-              <label for="end_date">End Date</label>
-              <TextInput
-                id="end_date"
-                v-model="form.enddate"
-                type="date"
-                class="mt-1 block w-full"
-              />
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2 items-start">
-            <div class="mt-4 w-full col-span-2">
-             <InputLabel value="Account Stages"/>
-              <CustomMultiSelect class="mt-1" v-model="form.stages" :options="props.stages" />
-              <InputError
-                :message="form.errors.stage"
-                class="mt-2 text-red-600"
-              />
-            </div>
-            <div class="mt-4 w-full col-span-1">
-              <InputLabel value="Select sector"/>
-              <select
-                v-model="form.sector_id"
-                class="w-full rounded border border-stroke bg-gray py-3 px-4.5 font-normal text-black focus:border-primary focus-visible:outline-none"
-              >
-                <option value="" disabled>Select Sector</option>
-                <option
-                  v-for="sector in props.sectors"
-                  :key="sector.id"
-                  :value="sector.id"
-                >
-                  {{ sector.name }}
-                </option>
-              </select>
-              <InputError :message="form.errors.sector" class="mt-2" />
-            </div>
-          </div>
-          <div class="mt-10 flex items-start justify-start">
-            <PrimaryButton
-              class=""
-              :class="{ 'opacity-25': form.processing }"
-              :disabled="form.processing"
-              @click.prevent="save"
-            >
-              Generate Report
-            </PrimaryButton>
-          </div>
+          <ul class="space-y-2 text-xs font-semibold text-gray-600 pl-1">
+            <li class="flex gap-2">
+              <span class="text-primary mt-0.5">•</span>
+              <span>Leave <strong class="text-gray-900">Account Manager</strong> empty to aggregate performance across all active representatives.</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-primary mt-0.5">•</span>
+              <span>Leave <strong class="text-gray-900">Solution Category</strong> empty to include all active categories and solutions.</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-primary mt-0.5">•</span>
+              <span>Leave <strong class="text-gray-900">Account Stages</strong> unselected to capture every deal state sequentially.</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-primary mt-0.5">•</span>
+              <span>If not set, duration defaults from <strong class="text-primary">June 01, 2024</strong> up to <strong class="text-primary">Today</strong>.</span>
+            </li>
+          </ul>
         </div>
       </div>
-    </section>
+
+      <!-- Config panel card -->
+      <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-card p-6">
+        <h3 class="text-sm font-bold text-gray-900 mb-5">Configure Criteria</h3>
+
+        <form @submit.prevent="save" class="space-y-4">
+          <!-- Row 1: Solution type, solution, subtype -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <InputLabel value="Solution Category" class="mb-1.5" />
+              <select v-model="form.solution_type_id"
+                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-xs py-2.5 transition-all">
+                <option :value="null">All Categories</option>
+                <option v-for="type in props.solutiontypes" :key="type.id" :value="type.id">
+                  {{ type.solution_type_name }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <InputLabel value="Specific Solution" class="mb-1.5" />
+              <select v-model="form.solution_id" :disabled="!showSolutionField"
+                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-xs py-2.5 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+                <option :value="null">All Solutions</option>
+                <option v-for="sol in filteredSolutions" :key="sol.id" :value="sol.id">
+                  {{ sol.solution_name }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <InputLabel value="Solution Subtype" class="mb-1.5" />
+              <select v-model="form.solution_subtype_id" :disabled="!showSolutionSubtypeField"
+                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-xs py-2.5 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+                <option :value="null">All Subtypes</option>
+                <option v-for="sub in filteredSolutionSubtypes" :key="sub.id" :value="sub.id">
+                  {{ sub.solution_sub_type_name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Account Manager, Sector -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <InputLabel value="Account Manager" class="mb-1.5" />
+              <select v-model="form.accountmanager"
+                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-xs py-2.5 transition-all">
+                <option :value="null">All Managers</option>
+                <option v-for="manager in props.accountmanagers" :key="manager.id" :value="manager.id">
+                  {{ manager.first_name }} {{ manager.last_name }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <InputLabel value="Sector" class="mb-1.5" />
+              <select v-model="form.sector_id"
+                class="w-full border-gray-200 focus:border-primary focus:ring-primary/10 rounded-lg text-xs py-2.5 transition-all">
+                <option :value="null">All Sectors</option>
+                <option v-for="sec in props.sectors" :key="sec.id" :value="sec.id">
+                  {{ sec.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: Date range picker -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <InputLabel value="Start Date" class="mb-1.5" />
+              <TextInput type="date" v-model="form.startdate" class="w-full text-xs" />
+            </div>
+
+            <div>
+              <InputLabel value="End Date" class="mb-1.5" />
+              <TextInput type="date" v-model="form.enddate" class="w-full text-xs" />
+            </div>
+          </div>
+
+          <!-- Multi-select stages -->
+          <div class="pt-2">
+            <InputLabel value="Pipeline Stages filter" class="mb-1.5" />
+            <CustomMultiSelect v-model="form.stages" :options="props.stages" />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end pt-4 border-t border-gray-100">
+            <PrimaryButton type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+              <div class="flex items-center gap-2">
+                <Icon icon="material-symbols:analytics-outline" class="h-4 w-4" />
+                Generate Custom Report
+              </div>
+            </PrimaryButton>
+          </div>
+        </form>
+      </div>
+    </div>
   </AppLayout>
 </template>
-
-
