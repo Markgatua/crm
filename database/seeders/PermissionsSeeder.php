@@ -37,6 +37,7 @@ class PermissionsSeeder extends Seeder
             'calling_code' => '+254',
             'role_id'      => 1,
             'department_id'=> 1,
+            'sales_rep'    => 0,
             'is_active'    => 1,
             'password'     => Hash::make('SuperAdmin@2024!'),
             'created_at'   => Carbon::now(),
