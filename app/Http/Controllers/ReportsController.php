@@ -90,13 +90,17 @@ class ReportsController extends Controller
             DB::raw('(
                 SELECT
                     psi.account_id,
-                    MAX(psi.project_stage_id) as project_stage_id,
-                    JSON_AGG(psi.meta) as meta,
-                    JSON_AGG(c.contact_information) as contact_information
+                    psi.project_stage_id,
+                    psi.meta,
+                    c.contact_information
                 FROM project_stage_information psi
                 LEFT JOIN accounts a ON a.id = psi.account_id
                 LEFT JOIN clients c ON c.id = a.client_id
-                GROUP BY psi.account_id
+                INNER JOIN (
+                    SELECT account_id, MAX(project_stage_id) as max_stage_id
+                    FROM project_stage_information
+                    GROUP BY account_id
+                ) latest ON latest.account_id = psi.account_id AND latest.max_stage_id = psi.project_stage_id
             ) as latest_stage'),
             'latest_stage.account_id', '=', 'accounts.id'
         )
@@ -420,16 +424,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -797,16 +809,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -1165,16 +1185,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -1530,16 +1558,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -1884,14 +1920,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -2243,14 +2285,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -2591,14 +2639,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -2937,14 +2991,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -3257,16 +3317,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -3636,16 +3704,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -4007,16 +4083,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -4376,16 +4460,24 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE project_stage_id IN (' . $arrAString . ')
+                                AND created_at >= \'' . $startdate . '\'
+                                AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.project_stage_id IN (' . $arrAString . ')
                             AND psi.created_at >= \'' . $startdate . '\'
                             AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     );
@@ -4733,14 +4825,20 @@ class ReportsController extends Controller
                             DB::raw('(
                                 SELECT
                                     psi.account_id,
-                                    MAX(psi.project_stage_id) as project_stage_id,
-                                    JSON_AGG(psi.meta) as meta,
-                                    JSON_AGG(c.contact_information) as contact_information
+                                    psi.project_stage_id,
+                                    psi.meta,
+                                    c.contact_information
                                 FROM project_stage_information psi
                                 LEFT JOIN accounts a ON a.id = psi.account_id
                                 LEFT JOIN clients c ON c.id = a.client_id
+                                INNER JOIN (
+                                    SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                    FROM project_stage_information
+                                    WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                    GROUP BY account_id
+                                ) latest ON latest.account_id = psi.account_id
+                                    AND latest.max_stage_id = psi.project_stage_id
                                 WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                                GROUP BY psi.account_id
                             ) as latest_stage'),
                             'latest_stage.account_id', '=', 'accounts.id'
                         )
@@ -5093,14 +5191,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -5452,14 +5556,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     )
@@ -5802,14 +5912,20 @@ class ReportsController extends Controller
                         DB::raw('(
                             SELECT
                                 psi.account_id,
-                                MAX(psi.project_stage_id) as project_stage_id,
-                                JSON_AGG(psi.meta) as meta,
-                                JSON_AGG(c.contact_information) as contact_information
+                                psi.project_stage_id,
+                                psi.meta,
+                                c.contact_information
                             FROM project_stage_information psi
                             LEFT JOIN accounts a ON a.id = psi.account_id
                             LEFT JOIN clients c ON c.id = a.client_id
+                            INNER JOIN (
+                                SELECT account_id, MAX(project_stage_id) as max_stage_id
+                                FROM project_stage_information
+                                WHERE created_at >= \'' . $startdate . '\' AND created_at <= \'' . $enddate . '\'
+                                GROUP BY account_id
+                            ) latest ON latest.account_id = psi.account_id
+                                AND latest.max_stage_id = psi.project_stage_id
                             WHERE psi.created_at >= \'' . $startdate . '\' AND psi.created_at <= \'' . $enddate . '\'
-                            GROUP BY psi.account_id
                         ) as latest_stage'),
                         'latest_stage.account_id', '=', 'accounts.id'
                     );
