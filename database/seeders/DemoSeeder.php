@@ -12,13 +12,25 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         // ─── Truncate in safe order ───────────────────────────────────────────
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = replica');
+        }
+
         DB::table('revenues')->truncate();
         DB::table('project_stage_information')->truncate();
         DB::table('accounts')->truncate();
         DB::table('clients')->truncate();
         DB::table('users')->whereNot('email', 'superadmin@xrxcrm.com')->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = DEFAULT');
+        }
 
         // ─── Sales Team Users (role_id=4 Sales Person, dept_id=2 Sales) ──────
         $salesTeam = [
