@@ -113,7 +113,7 @@ const menuGroups = ref([
         icon: "mdi:account-balance-wallet-outline",
         condition: page.props.auth.user.role_id === 1,
         children: [
-          { label: "All", route: "clients/all", isNamed: false },
+          { label: "All", route: "/clients/all", isNamed: false },
           { label: "Prospects", route: "/clients/bs/1", isNamed: false },
           { label: "Scooping", route: "/clients/bs/2", isNamed: false },
           { label: "Evaluation", route: "/clients/bs/3", isNamed: false },
