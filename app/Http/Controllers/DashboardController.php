@@ -160,12 +160,12 @@ class DashboardController extends Controller
 
                             // Perform the query to get the revenue counts
                             $revenueCounts = Revenue::select(
-                                    DB::raw('TO_CHAR(date, \'YYYY-MM\') as month'),
+                                    DB::raw('TO_CHAR(date::date, \'YYYY-MM\') as month'),
                                     DB::raw('SUM(amount) as total_revenue')
                                 )
-                                ->where('date', '>=', $currentDate->copy()->subMonths(12))
-                                ->groupBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'))
-                                ->orderBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'), 'asc')
+                                ->whereRaw("date::date >= ?", [$currentDate->copy()->subMonths(12)->toDateString()])
+                                ->groupBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'))
+                                ->orderBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'), 'asc')
                                 ->get();
 
                             // Convert the result to a collection and key by month for easier manipulation
@@ -470,12 +470,12 @@ class DashboardController extends Controller
 
                             // Perform the query to get the revenue counts
                             $revenueCounts = Revenue::select(
-                                    DB::raw('TO_CHAR(date, \'YYYY-MM\') as month'),
+                                    DB::raw('TO_CHAR(date::date, \'YYYY-MM\') as month'),
                                     DB::raw('SUM(amount) as total_revenue')
                                 )
-                                ->where('date', '>=', $currentDate->copy()->subMonths(12))
-                                ->groupBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'))
-                                ->orderBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'), 'asc')
+                                ->whereRaw("date::date >= ?", [$currentDate->copy()->subMonths(12)->toDateString()])
+                                ->groupBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'))
+                                ->orderBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'), 'asc')
                                 ->get();
 
                             // Convert the result to a collection and key by month for easier manipulation
@@ -694,12 +694,12 @@ $months = $months->reverse()->values();
 
 // Perform the query to get the revenue counts
 $revenueCounts = Revenue::select(
-        DB::raw('TO_CHAR(date, \'YYYY-MM\') as month'),
+        DB::raw('TO_CHAR(date::date, \'YYYY-MM\') as month'),
         DB::raw('SUM(amount) as total_revenue')
     )
-    ->where('date', '>=', $currentDate->copy()->subMonths(12))
-    ->groupBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'))
-    ->orderBy(DB::raw('TO_CHAR(date, \'YYYY-MM\')'), 'asc')
+    ->whereRaw("date::date >= ?", [$currentDate->copy()->subMonths(12)->toDateString()])
+    ->groupBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'))
+    ->orderBy(DB::raw('TO_CHAR(date::date, \'YYYY-MM\')'), 'asc')
     ->get();
 
 // Convert the result to a collection and key by month for easier manipulation
