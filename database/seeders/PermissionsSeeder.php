@@ -30,16 +30,17 @@ class PermissionsSeeder extends Seeder
 
         // ── Super Admin user ───────────────────────────────────────────────────
         $superAdmin = [
-            'first_name'  => 'Super',
-            'last_name'   => 'Admin',
-            'email'       => 'superadmin@xrx.com',
-            'phone'       => '0700000000',
-            'calling_code'=> '+254',
-            'role_id'     => 1,
-            'is_active'   => 1,
-            'password'    => Hash::make('SuperAdmin@2024!'),
-            'created_at'  => Carbon::now(),
-            'updated_at'  => Carbon::now(),
+            'first_name'   => 'Super',
+            'last_name'    => 'Admin',
+            'email'        => 'superadmin@xrx.com',
+            'phone'        => '0700000000',
+            'calling_code' => '+254',
+            'role_id'      => 1,
+            'department_id'=> 1,
+            'is_active'    => 1,
+            'password'     => Hash::make('SuperAdmin@2024!'),
+            'created_at'   => Carbon::now(),
+            'updated_at'   => Carbon::now(),
         ];
 
         DB::table('users')->updateOrInsert(
